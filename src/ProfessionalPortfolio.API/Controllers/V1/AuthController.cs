@@ -2,9 +2,10 @@
 
 namespace ProfessionalPortfolio.API.Controllers.V1
 {
-    [Route("api/v1/profiles")]
+    [Route("api/v1/auth")]
     [ApiController]
-    public class ProfilesController : ControllerBase
+    public class AuthController : ControllerBase
     {
+        
     }
 }
