@@ -1,4 +1,6 @@
 using ProfessionalPortfolio.Application.Common.Interfaces;
+using ProfessionalPortfolio.Application.Services;
+using ProfessionalPortfolio.Application.Services.Interfaces;
 using ProfessionalPortfolio.Infrastructure.Persistence;
 using ProfessionalPortfolio.Infrastructure.Repositories;
 
@@ -8,6 +10,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddScoped<InMemoryDbContext>();
 builder.Services.AddScoped<IUserRepository, InMemoryUserRepository>();
 // Other services here
+builder.Services.AddScoped<IUserService, UserService>();
+
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();

@@ -29,5 +29,11 @@ namespace ProfessionalPortfolio.Infrastructure.Repositories
             await Task.CompletedTask;
             return _dbContext.FirstOrDefault(u => u.Email == email);
         }
+
+        public async Task<AppUser?> GetById(Guid id)
+        {
+            await Task.CompletedTask;
+            return _dbContext.FirstOrDefault(u => u.Id == id);
+        }
     }
 }

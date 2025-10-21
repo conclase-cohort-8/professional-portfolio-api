@@ -7,5 +7,6 @@ namespace ProfessionalPortfolio.Application.Common.Interfaces
         Task AddAsync(AppUser user);
         IQueryable<AppUser> GetAll();
         Task<AppUser?> GetByEmail(string email);
+        Task<AppUser?> GetById(Guid id);
     }
 }

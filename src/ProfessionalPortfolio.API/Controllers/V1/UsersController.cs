@@ -19,5 +19,12 @@ namespace ProfessionalPortfolio.API.Controllers.V1
         {
             return Ok(_userService.GetAll());
         }
+
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetById([FromRoute] Guid id)
+        {
+            var response = await _userService.GetById(id);
+            return Ok(response);
+        }
     }
 }
