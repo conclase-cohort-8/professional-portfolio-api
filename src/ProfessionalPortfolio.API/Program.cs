@@ -9,8 +9,14 @@ var builder = WebApplication.CreateBuilder(args);
 // Add your services to the container.
 builder.Services.AddScoped<InMemoryDbContext>();
 builder.Services.AddScoped<IUserRepository, InMemoryUserRepository>();
+builder.Services.AddScoped<IEducationRepository, InMemoryEducationRepository>();
 // Other services here
 builder.Services.AddScoped<IUserService, UserService>();
+//TODO: Register dependencies
+//ADD EducationService as Scoped
+        //Interface: IEducationService
+        //Implementation: EducationService
+
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle

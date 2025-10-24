@@ -10,4 +10,8 @@
     <ProjectReference Include="..\ProfessionalPortfolio.Domain\ProfessionalPortfolio.Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Educations\Queries\" />
+  </ItemGroup>
+
 </Project>

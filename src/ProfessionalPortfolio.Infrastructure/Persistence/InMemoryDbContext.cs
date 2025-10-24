@@ -17,5 +17,7 @@ namespace ProfessionalPortfolio.Infrastructure.Persistence
                 Role = Roles.Admin.ToString()
             }
         };
+
+        public static List<Education> Educations { get; set; } = [];
     }
 }

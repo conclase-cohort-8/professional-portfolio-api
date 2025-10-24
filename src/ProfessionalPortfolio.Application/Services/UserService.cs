@@ -27,7 +27,7 @@ namespace ProfessionalPortfolio.Application.Services
             // check for existing user
             // You check email by calling GetByEmail() method from the repository
             // 2. If existing user not null, return null as the response
-            var existingUser = await _repository.GetByEmail(command.EmailAddress);
+            var existingUser = await _repository.GetByEmailAsync(command.EmailAddress);
             if(existingUser != null)
             {
                 return null!;
@@ -50,7 +50,7 @@ namespace ProfessionalPortfolio.Application.Services
 
         public async Task<UserInfoDto?> GetById(Guid id)
         {
-            var user = await _repository.GetById(id);
+            var user = await _repository.GetByIdAsync(id);
             if(user == null)
             {
                 return null;
@@ -82,7 +82,7 @@ namespace ProfessionalPortfolio.Application.Services
                 return null;
             }
 
-            var existing = await _repository.GetById(id);
+            var existing = await _repository.GetByIdAsync(id);
             if(existing == null)
             {
                 return null;
@@ -94,21 +94,21 @@ namespace ProfessionalPortfolio.Application.Services
             existing.LastName = command.LastName;
             existing.OtherName = command.OtherName;
 
-            await _repository.Delete(cloneExisting);
-            await _repository.Update(existing);
+            await _repository.DeleteAsync(cloneExisting);
+            await _repository.UpdateAsync(existing);
 
             return new UserInfoDto(existing);
         }
 
         public async Task Delete(Guid id)
         {
-            var user = await _repository.GetById(id);
+            var user = await _repository.GetByIdAsync(id);
             if (user == null)
             {
                 throw new Exception("User is null");
             }
 
-            await _repository.Delete(user);
+            await _repository.DeleteAsync(user);
         }
     }
 }
