@@ -18,7 +18,12 @@ namespace ProfessionalPortfolio.API.Controllers.V1
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterUserCommand command)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest("Invalid request");
+            }
             var registerResult = await _userService.RegisterAsync(command);
+            //var json = JsonConverter.
             return Ok(registerResult);
         }
     }

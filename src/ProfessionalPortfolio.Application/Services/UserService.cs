@@ -2,6 +2,7 @@
 using ProfessionalPortfolio.Application.Services.Interfaces;
 using ProfessionalPortfolio.Application.Users.Commands;
 using ProfessionalPortfolio.Application.Users.Dtos;
+using ProfessionalPortfolio.Application.Users.Queries;
 using ProfessionalPortfolio.Domain.Entities;
 
 namespace ProfessionalPortfolio.Application.Services
@@ -54,17 +55,60 @@ namespace ProfessionalPortfolio.Application.Services
             {
                 return null;
             }
-
             return new UserInfoDto(user);
         }
 
-        public List<UserInfoDto> GetAll()
+        public List<UserInfoDto> GetAll(GetAllUsersQuery query)
         {
-            var users = _repository.GetAll()
-                .ToList();
+            var users = _repository.GetAll();
+            if (!string.IsNullOrEmpty(query.Search))
+            {
+                users = users.Where(u => u.FirstName.Contains(query.Search, StringComparison.OrdinalIgnoreCase) || 
+                u.LastName.Contains(query.Search, StringComparison.OrdinalIgnoreCase));
+            }
+            if (query.Role.HasValue)
+            {
+                users = users.Where(u => u.Role.Equals(query.Role.Value.ToString(), StringComparison.OrdinalIgnoreCase));
+            }
 
             return users.Select(u => new UserInfoDto(u))
                 .ToList();
+        }
+
+        public async Task<UserInfoDto?> Update(Guid id, UserUpdateCommand command)
+        {
+            if(command == null || string.IsNullOrEmpty(command.FirstName) || string.IsNullOrEmpty(command.LastName))
+            {
+                return null;
+            }
+
+            var existing = await _repository.GetById(id);
+            if(existing == null)
+            {
+                return null;
+            }
+
+            var cloneExisting = existing;
+
+            existing.FirstName = command.FirstName;
+            existing.LastName = command.LastName;
+            existing.OtherName = command.OtherName;
+
+            await _repository.Delete(cloneExisting);
+            await _repository.Update(existing);
+
+            return new UserInfoDto(existing);
+        }
+
+        public async Task Delete(Guid id)
+        {
+            var user = await _repository.GetById(id);
+            if (user == null)
+            {
+                throw new Exception("User is null");
+            }
+
+            await _repository.Delete(user);
         }
     }
 }

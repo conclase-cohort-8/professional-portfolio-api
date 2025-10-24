@@ -35,5 +35,17 @@ namespace ProfessionalPortfolio.Infrastructure.Repositories
             await Task.CompletedTask;
             return _dbContext.FirstOrDefault(u => u.Id == id);
         }
+
+        public async Task Update(AppUser user)
+        {
+            await Task.CompletedTask;
+            _dbContext.Add(user);
+        }
+
+        public async Task Delete(AppUser user)
+        {
+            await Task.CompletedTask;
+            _dbContext.Remove(user);
+        }
     }
 }
