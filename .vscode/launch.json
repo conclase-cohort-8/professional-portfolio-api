@@ -1,0 +1,16 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Launch ProfessionalPortfolio.API (.NET)",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build ProfessionalPortfolio.API",
+      "program": "${workspaceFolder}/src/ProfessionalPortfolio.API/bin/Debug/net8.0/ProfessionalPortfolio.API.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/src/ProfessionalPortfolio.API",
+      "stopAtEntry": false,
+      "console": "integratedTerminal"
+    }
+  ]
+}

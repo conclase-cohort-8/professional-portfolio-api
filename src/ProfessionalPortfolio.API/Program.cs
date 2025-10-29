@@ -16,6 +16,7 @@ builder.Services.AddScoped<IUserService, UserService>();
 //ADD EducationService as Scoped
         //Interface: IEducationService
         //Implementation: EducationService
+builder.Services.AddScoped<IEducationService, EducationService>();
 
 
 builder.Services.AddControllers();

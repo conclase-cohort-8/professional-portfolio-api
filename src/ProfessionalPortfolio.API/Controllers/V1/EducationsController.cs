@@ -18,12 +18,13 @@ namespace ProfessionalPortfolio.API.Controllers.V1
         }
 
         [HttpGet]
-        public IActionResult Get([FromHeader(Name = "X-UserId")] Guid userId)
+        public IActionResult Get([FromHeader(Name = "X-User-Id")] Guid userId)
         {
-
+            var response = _service.GetEducations(userId);
             return FromResponse(_service.GetEducations(userId));
         }
 
+        
         #region Your Get All Action Should Go Here
         //TODO: POST Action
         //TODO: SHOULD return Task<IActionResult>
@@ -32,5 +33,11 @@ namespace ProfessionalPortfolio.API.Controllers.V1
         //TODO: CALL _service.AddEducation(userId, command)
         //TODO: RETURN FromResponse() and PASS the response from the service into it.
         #endregion
+        [HttpPost]
+        public async Task<IActionResult> Post([FromHeader(Name = "X-UserId")] Guid userId, [FromBody] AddEducationCommand command)
+        {
+            var response = await _service.AddEducation(userId, command);
+            return FromResponse(response);
+        }
     }
 }

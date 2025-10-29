@@ -30,7 +30,10 @@ namespace ProfessionalPortfolio.Application.Services
             // If either the userId is empty or the command object is null,
             // we immediately return an error response with a 400 (Bad Request) status code.
             // TODO: command == null || userId == Guid.Empty return new ApiResult<EducationInfoDto>("Invalid input.", 400);
-
+            if (command == null || userId == Guid.Empty)
+            {
+                return new ApiResult<EducationInfoDto>("Invalid input.", 400);
+            }
             // ---------------------------------------------
             // Step 2: Validate required fields inside the command
             // ---------------------------------------------
@@ -38,7 +41,10 @@ namespace ProfessionalPortfolio.Application.Services
             // For example, Institution, Degree, and Course must not be empty.
             // If validation fails, another 400 response is returned with an explanatory message.
             // TODO: if !IsValid(command) return new ApiResult<EducationInfoDto>("One or more required fields are missing.", 400);
-
+            if (!IsValid(command))
+            {
+                return new ApiResult<EducationInfoDto>("One or more required fields are missing.", 400);
+            }
             // ---------------------------------------------
             // Step 3: Retrieve the user from the database
             // ---------------------------------------------
@@ -46,7 +52,10 @@ namespace ProfessionalPortfolio.Application.Services
             // If no user is found for the provided ID, we return a 404 (Not Found) response.
             var user = await _userRepository.GetByIdAsync(userId);
             // TODO: if user == null return new ApiResult<EducationInfoDto>("User not found.", 404);
-
+            if (user == null)
+            {
+                return new ApiResult<EducationInfoDto>("User not found.", 404);
+            }
             // ---------------------------------------------
             // Step 4: Create and populate a new Education entity
             // ---------------------------------------------
@@ -62,6 +71,13 @@ namespace ProfessionalPortfolio.Application.Services
                 //Degree 
                 //StartDate
                 //EndDate
+
+                UserId = userId,
+                Institution = command.Institution,
+                FieldOfStudy = command.Course,
+                Degree = command.Degree,
+                StartDate = command.StartDate,
+                EndDate = command.EndDate
             };
 
             // ---------------------------------------------
@@ -71,12 +87,13 @@ namespace ProfessionalPortfolio.Application.Services
             // This call is asynchronous to prevent blocking the main thread.
             // TODO: call the AddAsync() method from _repository and pass in the above education object
             // TODO: you should await this call
-
+            await _repository.AddAsync(education);
             // ---------------------------------------------
             // Step 6: Return a successful result
             // ---------------------------------------------
             // Finally, we wrap the newly created education info in a standardized ApiResult
             // object. This makes sure every API response follows the same structure.
+            
             return new ApiResult<EducationInfoDto>(new EducationInfoDto(education));
         }
 
