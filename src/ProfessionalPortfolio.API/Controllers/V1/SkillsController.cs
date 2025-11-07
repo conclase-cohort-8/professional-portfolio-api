@@ -1,12 +1,5 @@
-﻿using Azure.Core;
-using Azure;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Hosting;
+﻿using Microsoft.AspNetCore.Mvc;
 using ProfessionalPortfolio.Application.Services.Interfaces;
-using ProfessionalPortfolio.Application.Skills.Commands;
-using ProfessionalPortfolio.Domain.Entities;
-using static System.Net.WebRequestMethods;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace ProfessionalPortfolio.API.Controllers.V1
 {

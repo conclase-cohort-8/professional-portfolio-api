@@ -3,7 +3,6 @@ using ProfessionalPortfolio.Application.Common.Interfaces;
 using ProfessionalPortfolio.Application.Services.Interfaces;
 using ProfessionalPortfolio.Application.Skills.Dtos;
 using ProfessionalPortfolio.Domain.Entities;
-using System.ComponentModel;
 
 namespace ProfessionalPortfolio.Application.Services
 {
