@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using ProfessionalPortfolio.Application.Services.Interfaces;
+using ProfessionalPortfolio.Application.Skills.Commands;
 
 namespace ProfessionalPortfolio.API.Controllers.V1
 {
@@ -34,15 +35,20 @@ namespace ProfessionalPortfolio.API.Controllers.V1
 
         //TODO: Action Method: PostUserSkills
         //When a POST request is made to the "api/v1/skills/user" endpoint:
+        [HttpPost("user")]
         //1. Extract UserId from the request header("X-UserId").
         //2. Extract the AddUserSkillCommand object from the request body.
-        //3. Call the skill service method AddSkillsAsync with the UserId from step 1 and the command from step 2.
-        //4. Wait for the service to return a response.
-        //5. Return StatusCode() using:
-        //      - The status code from the service response as the first parameter
-        //      - The response body from the service as the second parameter
-
-
+        public async Task<IActionResult> PostUserSkills([FromHeader(Name = "X-UserId")] Guid userId,
+                                                        [FromBody] AddUserSkillCommand command)
+        {
+            //3. Call the skill service method AddSkillsAsync with the UserId from step 1 and the command from step 2.
+            var result = await _skillService.AddSkillsAsync(userId, command);
+            //4. Wait for the service to return a response.
+            //5. Return StatusCode() using:
+            //      - The status code from the service response as the first parameter
+            //      - The response body from the service as the second parameter
+            return StatusCode(result.Status, result);
+        }
 
         [HttpGet("user")]
         public async Task<IActionResult> GetUserSkills([FromHeader(Name = "X-UserId")] Guid userId)

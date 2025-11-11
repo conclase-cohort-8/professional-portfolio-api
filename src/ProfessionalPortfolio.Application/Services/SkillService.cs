@@ -1,6 +1,7 @@
 ﻿using ProfessionalPortfolio.Application.Common;
 using ProfessionalPortfolio.Application.Common.Interfaces;
 using ProfessionalPortfolio.Application.Services.Interfaces;
+using ProfessionalPortfolio.Application.Skills.Commands;
 using ProfessionalPortfolio.Application.Skills.Dtos;
 using ProfessionalPortfolio.Domain.Entities;
 
@@ -62,25 +63,50 @@ namespace ProfessionalPortfolio.Application.Services
 
         //TODO: Service Method: AddSkillsAsync
         //To add skills for a user:
+        public async Task<ApiResult<string>> AddSkillsAsync(Guid userId, AddUserSkillCommand command)
+        {
+            //1. If the UserId is empty or the command is missing:
+            //      → Return a response with message "Invalid input" and status 400.
+            if(userId == Guid.Empty || command == null)
+            {
+                return new ApiResult<string>("Invalid input", 400);
+            }
 
-        //1. If the UserId is empty or the command is missing:
-        //      → Return a response with message "Invalid input" and status 400.
+            //2. If the UserId does not match the UserId inside the command:
+            //      → Return a response with message "You cannot add skill for a different user." and status 403.
+            if(userId != command.UserId)
+            {
+                return new ApiResult<string>("You cannot add skill for a different user.", 403);
+            }
 
-        //2. If the UserId does not match the UserId inside the command:
-        //      → Return a response with message "You cannot add skill for a different user." and status 403.
+            //3. Retrieve the user record from the user repository using the UserId received in step 1.
+            //      → If the user is not found, return "User not found".
+            var user = await _userRepository.GetByIdAsync(userId);
+            if(user == null)
+            {
+                return new ApiResult<string>("User not found", 404);
+            }
 
-        //3. Retrieve the user record from the user repository using the UserId received in step 1.
-        //      → If the user is not found, return "User not found".
+            //4. Retrieve the skill record from the skill repository using the SkillId from the command.
+            var skill = await _skillRepository.GetByIdAsync(command.SkillId);
+            if (skill == null)
+            {
+                return new ApiResult<string>("Skill not found", 404);
+            }
+            //5. Create a new UserSkill record using:
+            //      - Id obtained from step 3 (user record) as UserId
+            //      - Id obtained from step 4 (skill record) as SkillId
+            var userSkill = new UserSkill
+            {
+                UserId = user.Id,
+                SkillId = skill.Id
+            };
 
-        //4. Retrieve the skill record from the skill repository using the SkillId from the command.
-
-        //5. Create a new UserSkill record using:
-        //      - Id obtained from step 3 (user record) as UserId
-        //      - Id obtained from step 4 (skill record) as SkillId
-
-        //6. Save the new UserSkill record into the skill repository by calling AddUserSkill method.
-
-        //7. Return a success response with a message:
-        //      “{ SkillName } successfully added to user skills.”
+            //6. Save the new UserSkill record into the skill repository by calling AddUserSkill method.
+            await _skillRepository.AddUserSkill(userSkill);
+            //7. Return a success response with a message:
+            //      “{ SkillName } successfully added to user skills.”
+            return new ApiResult<string>($"{ skill.Name } successfully added to user skills.", 200, true);
+        }
     }
 }
