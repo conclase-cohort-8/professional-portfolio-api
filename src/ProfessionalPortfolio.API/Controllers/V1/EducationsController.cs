@@ -25,12 +25,13 @@ namespace ProfessionalPortfolio.API.Controllers.V1
         }
 
         #region Your Get All Action Should Go Here
-        //TODO: POST Action
-        //TODO: SHOULD return Task<IActionResult>
-        //TODO: Retrieve user id from the header. Header name should be X-UserId
-        //TODO: Command comes from the request body. Use: AddEducationCommand type
-        //TODO: CALL _service.AddEducation(userId, command)
-        //TODO: RETURN FromResponse() and PASS the response from the service into it.
+        [HttpPost]
+        public async Task<IActionResult> Post([FromHeader(Name = "X-UserId")] Guid userId, 
+                                              [FromBody] AddEducationCommand command)
+        {
+            var response = await _service.AddEducation(userId, command);
+            return FromResponse(response);
+        }        
         #endregion
     }
 }

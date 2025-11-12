@@ -12,6 +12,7 @@
 
   <ItemGroup>
     <Folder Include="Educations\Queries\" />
+    <Folder Include="Skills\Queries\" />
   </ItemGroup>
 
 </Project>
