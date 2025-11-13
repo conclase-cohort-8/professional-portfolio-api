@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using ProfessionalPortfolio.Application.Services.Interfaces;
+using ProfessionalPortfolio.Application.Skills.Commands;
+using System.Diagnostics;
 
 namespace ProfessionalPortfolio.API.Controllers.V1
 {
@@ -18,7 +20,7 @@ namespace ProfessionalPortfolio.API.Controllers.V1
         public async Task<IActionResult> PostMany(List<string> skills)
         {
             var response = await _skillService.AddSkills(skills);
-            if(response.Status == 200)
+            if (response.Status == 200)
             {
                 return Ok(response);
             }
@@ -42,7 +44,41 @@ namespace ProfessionalPortfolio.API.Controllers.V1
         //      - The status code from the service response as the first parameter
         //      - The response body from the service as the second parameter
 
+        [HttpPost("user")]
+        public async Task<IActionResult> PostUserSkills([FromBody] AddUserSkillCommand command)
+        {
+            try
+            {
+                if (!Request.Headers.TryGetValue("X-UserId", out var userIdHeader) || string.IsNullOrEmpty(userIdHeader))
+                {
+                    return BadRequest("Invalid or missing X-UserId Header");
+                }
 
+                if (!Guid.TryParse(userIdHeader, out var skillIdHeader))
+                {
+                    return BadRequest("Invalid UserID request");
+                }
+
+                //2 
+                if (command == null)
+                {
+                    return BadRequest("Request body cannot be empty");
+                }
+
+                //3
+                var result = await _skillService.AddSkillsAsync(skillIdHeader, command);
+
+
+                //5
+                return StatusCode(result.StatusCode, new { Message = result.Message });
+
+
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
 
         [HttpGet("user")]
         public async Task<IActionResult> GetUserSkills([FromHeader(Name = "X-UserId")] Guid userId)
@@ -52,3 +88,4 @@ namespace ProfessionalPortfolio.API.Controllers.V1
         }
     }
 }
+

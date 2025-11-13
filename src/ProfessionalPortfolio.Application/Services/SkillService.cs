@@ -1,6 +1,7 @@
 ﻿using ProfessionalPortfolio.Application.Common;
 using ProfessionalPortfolio.Application.Common.Interfaces;
 using ProfessionalPortfolio.Application.Services.Interfaces;
+using ProfessionalPortfolio.Application.Skills.Commands;
 using ProfessionalPortfolio.Application.Skills.Dtos;
 using ProfessionalPortfolio.Domain.Entities;
 
@@ -82,5 +83,48 @@ namespace ProfessionalPortfolio.Application.Services
 
         //7. Return a success response with a message:
         //      “{ SkillName } successfully added to user skills.”
+
+        public async Task <ServiceResult> AddSkillsAsync (Guid skillIdHeader , AddUserSkillCommand command)
+        {
+            // 1
+            if (skillIdHeader == Guid.Empty || command == null)
+                return ServiceResult.Failure("Invalid input", 400);
+
+            // 2
+            if (skillIdHeader != command.UserId)
+                return ServiceResult.Failure("You cannot add skill for a different user.", 403);
+
+            //3
+            var user = await _userRepository.GetByIdAsync(command.UserId);
+            if (user == null)
+                return ServiceResult.Failure("User not found.", 404);
+
+            //4
+            var skill = await _skillRepository.GetByIdAsync(command.SkillId);
+            if (skill == null)
+                return ServiceResult.Failure("Skill not found.", 404);
+
+
+            try
+            {
+                //5
+                var userSkill = new UserSkill
+                {
+                    UserId = user.Id,
+                    SkillId = skill.Id
+                };
+
+
+                //6
+                await _skillRepository.AddUserSkill(userSkill);
+
+
+                //7
+
+                return ServiceResult.Sucess($"{skill.Name} successfully added to user skills.", 200);
+            }
+            catch (Exception ex)
+            { return ServiceResult.Failure("An error occured", 500); }
+        }
     }
 }
