@@ -1,4 +1,5 @@
-﻿using ProfessionalPortfolio.Application.Common;
+﻿using AutoMapper;
+using ProfessionalPortfolio.Application.Common;
 using ProfessionalPortfolio.Application.Common.Interfaces;
 using ProfessionalPortfolio.Application.Services.Interfaces;
 using ProfessionalPortfolio.Application.Skills.Commands;
@@ -11,12 +12,15 @@ namespace ProfessionalPortfolio.Application.Services
     {
         private readonly ISkillRepository _skillRepository;
         private readonly IUserRepository _userRepository;
+        private readonly IMapper _mapper;
 
         public SkillService(ISkillRepository skillRepository,
-                            IUserRepository userRepository)
+                            IUserRepository userRepository,
+                            IMapper mapper)
         {
             _skillRepository = skillRepository;
             _userRepository = userRepository;
+            _mapper = mapper;
         }
 
         public async Task<ApiResult<List<SkillInfoDto>>> AddSkills(List<string> commands)
@@ -41,7 +45,9 @@ namespace ProfessionalPortfolio.Application.Services
             }).ToList();
 
             await _skillRepository.CreateRangeAsync(newSkills);
-            return new ApiResult<List<SkillInfoDto>>(newSkills.Select(SkillInfoDto.Map).ToList());
+
+            var skillnfo = _mapper.Map<List<SkillInfoDto>>(newSkills);
+            return new ApiResult<List<SkillInfoDto>>(skillnfo);
         }
 
         public ApiResult<List<SkillInfoDto>> GetAllSkills()
@@ -50,7 +56,8 @@ namespace ProfessionalPortfolio.Application.Services
                 .OrderBy(s => s.Name)
                 .ToList();
 
-            return new ApiResult<List<SkillInfoDto>>(skills.Select(SkillInfoDto.Map).ToList());
+            var skillnfo = _mapper.Map<List<SkillInfoDto>>(skills);
+            return new ApiResult<List<SkillInfoDto>>(skillnfo);
         }
 
         public async Task<ApiResult<List<string>>> GetUserSkillsAsync(Guid userId)
@@ -61,51 +68,37 @@ namespace ProfessionalPortfolio.Application.Services
             return new ApiResult<List<string>>(userSkills);
         }
 
-        //TODO: Service Method: AddSkillsAsync
-        //To add skills for a user:
         public async Task<ApiResult<string>> AddSkillsAsync(Guid userId, AddUserSkillCommand command)
         {
-            //1. If the UserId is empty or the command is missing:
-            //      → Return a response with message "Invalid input" and status 400.
             if(userId == Guid.Empty || command == null)
             {
                 return new ApiResult<string>("Invalid input", 400);
             }
 
-            //2. If the UserId does not match the UserId inside the command:
-            //      → Return a response with message "You cannot add skill for a different user." and status 403.
             if(userId != command.UserId)
             {
                 return new ApiResult<string>("You cannot add skill for a different user.", 403);
             }
 
-            //3. Retrieve the user record from the user repository using the UserId received in step 1.
-            //      → If the user is not found, return "User not found".
             var user = await _userRepository.GetByIdAsync(userId);
             if(user == null)
             {
                 return new ApiResult<string>("User not found", 404);
             }
 
-            //4. Retrieve the skill record from the skill repository using the SkillId from the command.
             var skill = await _skillRepository.GetByIdAsync(command.SkillId);
             if (skill == null)
             {
                 return new ApiResult<string>("Skill not found", 404);
             }
-            //5. Create a new UserSkill record using:
-            //      - Id obtained from step 3 (user record) as UserId
-            //      - Id obtained from step 4 (skill record) as SkillId
+            
             var userSkill = new UserSkill
             {
                 UserId = user.Id,
                 SkillId = skill.Id
             };
 
-            //6. Save the new UserSkill record into the skill repository by calling AddUserSkill method.
             await _skillRepository.AddUserSkill(userSkill);
-            //7. Return a success response with a message:
-            //      “{ SkillName } successfully added to user skills.”
             return new ApiResult<string>($"{ skill.Name } successfully added to user skills.", 200, true);
         }
     }
