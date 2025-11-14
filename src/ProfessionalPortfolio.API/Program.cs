@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using ProfessionalPortfolio.Application.Common.Interfaces;
+using ProfessionalPortfolio.Application.Mapper;
 using ProfessionalPortfolio.Application.Services;
 using ProfessionalPortfolio.Application.Services.Interfaces;
 using ProfessionalPortfolio.Infrastructure.Persistence;
@@ -8,9 +9,13 @@ using ProfessionalPortfolio.Infrastructure.Repositories;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add your services to the container.
+
 var connectionString = builder.Configuration.GetConnectionString("Default");
 builder.Services.AddDbContext<SqlServerDbContext>(options => options.UseSqlServer(connectionString));
 //
+builder.Services.AddAutoMapper(m =>
+{
+}, typeof(MapperProfile));
 builder.Services.AddScoped<InMemoryDbContext>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IEducationRepository, EducationRepository>();
