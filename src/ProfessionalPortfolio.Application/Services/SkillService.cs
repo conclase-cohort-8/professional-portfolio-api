@@ -3,6 +3,7 @@ using ProfessionalPortfolio.Application.Common.Interfaces;
 using ProfessionalPortfolio.Application.Services.Interfaces;
 using ProfessionalPortfolio.Application.Skills.Dtos;
 using ProfessionalPortfolio.Domain.Entities;
+using ProfessionalPortfolio.Application.Skills.Commands;
 
 namespace ProfessionalPortfolio.Application.Services
 {
@@ -62,6 +63,37 @@ namespace ProfessionalPortfolio.Application.Services
 
         //TODO: Service Method: AddSkillsAsync
         //To add skills for a user:
+      public async Task <ApiResult<string>> AddSkillsAsync(Guid UserId , AddUserSkillCommand command)
+        {
+            if (UserId == Guid.Empty || command == null)
+            {
+                return new ApiResult<string>("Invalid input", 400);
+            }
+
+            if (UserId != command.UserId)
+            {
+                return new ApiResult<string>("You cannot add skill for a different user", 403);
+            }
+
+            var userRecord = await _userRepository.GetByIdAsync(UserId);
+                if (userRecord == null)
+            {
+                return new ApiResult<string>("User not found", 404);
+            }
+
+
+            var skill_Record = await _skillRepository.GetByIdAsync(command.SkillId);
+
+                var UserSkill = new UserSkill
+                {
+                   UserId  = userRecord.Id,
+                    SkillId = skill_Record.Id
+                };
+
+            await _skillRepository.AddUserSkill(UserSkill);
+
+                return new ApiResult<string>(" successfully added to user skills", 200);
+        }
 
         //1. If the UserId is empty or the command is missing:
         //      → Return a response with message "Invalid input" and status 400.
