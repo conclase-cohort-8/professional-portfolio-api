@@ -28,5 +28,8 @@ namespace ProfessionalPortfolio.Domain.Entities
         public Location? Location { get; set; }
 
         public List<UserSkill> UserSkills { get; set; } = [];
+
+        //updated
+        public virtual ICollection<Experience> Experiences { get; set; } = [];
     }
 }

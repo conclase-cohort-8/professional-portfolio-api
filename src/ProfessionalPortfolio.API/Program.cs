@@ -24,6 +24,7 @@ builder.Services.AddScoped<ISkillRepository,  SkillRepository>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IEducationService, EducationService>();
 builder.Services.AddScoped<ISkillService, SkillService>();
+builder.Services.AddScoped<IExperienceRepository, ExperienceRepository>();
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle

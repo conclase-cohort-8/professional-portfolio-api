@@ -11,6 +11,10 @@ namespace ProfessionalPortfolio.Infrastructure.Persistence
         public DbSet<Skill> Skills { get; set; }
         public DbSet<UserSkill> UserSkills { get; set; }
 
+        //Updated
+        public DbSet<Experience> Experiences { get; set; }
+
+
         public SqlServerDbContext(DbContextOptions<SqlServerDbContext> options) :
             base(options)
         {
@@ -33,6 +37,12 @@ namespace ProfessionalPortfolio.Infrastructure.Persistence
                 .HasOne(us => us.Skill)
                 .WithMany(s => s.UserSkills)
                 .HasForeignKey(us => us.SkillId);
+
+            //Updated
+            modelBuilder.Entity<Experience>()
+                .HasOne(e => e.AppUser)
+                .WithMany(u => u.Experiences)
+                .HasForeignKey(e => e.AppUserId);
         }
     }
 }
