@@ -4,7 +4,8 @@ using ProfessionalPortfolio.Application.Users.Commands;
 
 namespace ProfessionalPortfolio.API.Controllers.V1
 {
-    [Route("api/v1/auth")]
+    [Route("api/v{version:apiversion}/auth")]
+    [ApiVersion("1.0")]
     [ApiController]
     public class AuthController : ControllerBase
     {

@@ -5,7 +5,8 @@ using ProfessionalPortfolio.Application.Users.Queries;
 
 namespace ProfessionalPortfolio.API.Controllers.V1
 {
-    [Route("api/v1/users")]
+    [Route("api/v{version:apiversion}/users")]
+    [ApiVersion("1.0")]
     [ApiController]
     public class UsersController : ControllerBase
     {

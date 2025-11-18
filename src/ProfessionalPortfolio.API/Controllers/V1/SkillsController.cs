@@ -4,7 +4,8 @@ using ProfessionalPortfolio.Application.Skills.Commands;
 
 namespace ProfessionalPortfolio.API.Controllers.V1
 {
-    [Route("api/v1/skills")]
+    [Route("api/v{version:apiversion}/skills")]
+    [ApiVersion("1.0")]
     [ApiController]
     public class SkillsController : ControllerBase
     {

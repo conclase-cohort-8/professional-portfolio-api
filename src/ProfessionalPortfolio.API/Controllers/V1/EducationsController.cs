@@ -1,12 +1,11 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using ProfessionalPortfolio.Application.Common;
 using ProfessionalPortfolio.Application.Educations.Commands;
 using ProfessionalPortfolio.Application.Services.Interfaces;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace ProfessionalPortfolio.API.Controllers.V1
 {
-    [Route("api/v1/educations")]
+    [Route("api/v{version:apiversion}/educations")]
+    [ApiVersion("1.0")]
     [ApiController]
     public class EducationsController : ApiControllerBase
     {
