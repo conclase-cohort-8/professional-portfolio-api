@@ -8,7 +8,7 @@ using ProfessionalPortfolio.Infrastructure.Repositories;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add your services to the container.
-var connectionString = builder.Configuration.GetConnectionString("Default");
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<SqlServerDbContext>(options => options.UseSqlServer(connectionString));
 //
 builder.Services.AddScoped<InMemoryDbContext>();
