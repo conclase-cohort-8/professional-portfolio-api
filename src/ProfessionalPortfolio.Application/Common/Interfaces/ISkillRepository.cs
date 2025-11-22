@@ -9,5 +9,6 @@ namespace ProfessionalPortfolio.Application.Common.Interfaces
         IQueryable<Skill> GetAsQueryable();
         Task<Skill?> GetByIdAsync(Guid id);
         Task<List<string>> GetUserSkills(Guid userId);
+        Task RemoveAsync(UserSkill userSkill);
     }
 }

@@ -21,10 +21,23 @@ namespace ProfessionalPortfolio.Infrastructure.Repositories
         }
 
         public IQueryable<Education> GetAll()
-            => _dbContext.Educations;
+            => _dbContext.Educations.Where(e => !e.IsDeleted);
 
         public async Task<Education?> GetByIdAsync(Guid id) 
             => await _dbContext.Educations
-            .FirstOrDefaultAsync(ed => ed.Id == id);
+            .FirstOrDefaultAsync(ed => ed.Id == id && !ed.IsDeleted);
+
+        public async Task UpdateAsync(Education education)
+        {
+            _dbContext.Update(education);
+            await _dbContext.SaveChangesAsync();
+        }
+
+        public async Task Deprecate(Education education)
+        {
+            education.IsDeleted = true;
+            _dbContext.Update(education);
+            await _dbContext.SaveChangesAsync();
+        }
     }
 }

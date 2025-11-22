@@ -39,5 +39,11 @@ namespace ProfessionalPortfolio.Infrastructure.Repositories
                 .Select(us => us.Skill!.Name)
                 .ToListAsync();
         }
+
+        public async Task RemoveAsync(UserSkill userSkill)
+        {
+            _context.UserSkills.Remove(userSkill);
+            await _context.SaveChangesAsync();
+        }
     }
 }

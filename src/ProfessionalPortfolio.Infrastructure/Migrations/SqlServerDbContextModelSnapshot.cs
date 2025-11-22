@@ -52,15 +52,17 @@ namespace ProfessionalPortfolio.Infrastructure.Migrations
                     b.Property<string>("OtherName")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Role")
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                    b.Property<byte>("Status")
+                        .HasColumnType("tinyint");
 
                     b.Property<DateTime?>("UpdatedOn")
                         .HasColumnType("datetime2");
@@ -113,6 +115,50 @@ namespace ProfessionalPortfolio.Infrastructure.Migrations
                     b.ToTable("Educations");
                 });
 
+            modelBuilder.Entity("ProfessionalPortfolio.Domain.Entities.Experience", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedOn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("EndDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Organization")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("UpdatedOn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Experiences");
+                });
+
             modelBuilder.Entity("ProfessionalPortfolio.Domain.Entities.Location", b =>
                 {
                     b.Property<Guid>("Id")
@@ -157,6 +203,41 @@ namespace ProfessionalPortfolio.Infrastructure.Migrations
                         .IsUnique();
 
                     b.ToTable("Locations");
+                });
+
+            modelBuilder.Entity("ProfessionalPortfolio.Domain.Entities.Project", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedOn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime?>("UpdatedOn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Projects");
                 });
 
             modelBuilder.Entity("ProfessionalPortfolio.Domain.Entities.Skill", b =>
@@ -210,11 +291,33 @@ namespace ProfessionalPortfolio.Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("ProfessionalPortfolio.Domain.Entities.Experience", b =>
+                {
+                    b.HasOne("ProfessionalPortfolio.Domain.Entities.AppUser", "User")
+                        .WithMany("Experiences")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("ProfessionalPortfolio.Domain.Entities.Location", b =>
                 {
                     b.HasOne("ProfessionalPortfolio.Domain.Entities.AppUser", "User")
                         .WithOne("Location")
                         .HasForeignKey("ProfessionalPortfolio.Domain.Entities.Location", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("ProfessionalPortfolio.Domain.Entities.Project", b =>
+                {
+                    b.HasOne("ProfessionalPortfolio.Domain.Entities.AppUser", "User")
+                        .WithMany("Projects")
+                        .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -244,7 +347,11 @@ namespace ProfessionalPortfolio.Infrastructure.Migrations
                 {
                     b.Navigation("Educations");
 
+                    b.Navigation("Experiences");
+
                     b.Navigation("Location");
+
+                    b.Navigation("Projects");
 
                     b.Navigation("UserSkills");
                 });

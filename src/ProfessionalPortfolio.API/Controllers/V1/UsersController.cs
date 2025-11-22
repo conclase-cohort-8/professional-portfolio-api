@@ -1,11 +1,13 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using ProfessionalPortfolio.Application.Commands;
+using ProfessionalPortfolio.Application.Queries;
 using ProfessionalPortfolio.Application.Services.Interfaces;
-using ProfessionalPortfolio.Application.Users.Commands;
-using ProfessionalPortfolio.Application.Users.Queries;
 
 namespace ProfessionalPortfolio.API.Controllers.V1
 {
-    [Route("api/v1/users")]
+    [Route("api/v{version:apiversion}/users")]
+    [ApiVersion("1.0")]
     [ApiController]
     public class UsersController : ControllerBase
     {
@@ -17,6 +19,7 @@ namespace ProfessionalPortfolio.API.Controllers.V1
         }
 
         [HttpGet]
+        [Authorize(Roles = "Admin")]
         public IActionResult GetAll([FromQuery] GetAllUsersQuery query)
         {
             return Ok(_userService.GetAll(query));
@@ -33,10 +36,11 @@ namespace ProfessionalPortfolio.API.Controllers.V1
             return Ok(response);
         }
 
-        [HttpPut("{id}")]
-        public async Task<IActionResult> Update([FromRoute] Guid id, [FromBody] UserUpdateCommand command)
+        [HttpPut]
+        //TODO: Make this a protected route by adding the Authorize attirbute here
+        public async Task<IActionResult> Update([FromBody] UserUpdateCommand command)
         {
-            var response = await _userService.Update(id, command);
+            var response = await _userService.Update(command);
             if(response == null)
             {
                 return NotFound("User not found");
@@ -46,6 +50,7 @@ namespace ProfessionalPortfolio.API.Controllers.V1
         }
 
         [HttpDelete("{id}")]
+        //TODO: Make this a protected route by adding the Authorize attirbute here but only user with Admin role should be able to access it
         public async Task<IActionResult> Delete(Guid id)
         {
             await _userService.Delete(id);

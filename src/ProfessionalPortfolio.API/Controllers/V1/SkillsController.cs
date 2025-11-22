@@ -1,10 +1,11 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using ProfessionalPortfolio.Application.Commands;
 using ProfessionalPortfolio.Application.Services.Interfaces;
-using ProfessionalPortfolio.Application.Skills.Commands;
 
 namespace ProfessionalPortfolio.API.Controllers.V1
 {
-    [Route("api/v1/skills")]
+    [Route("api/v{version:apiversion}/skills")]
+    [ApiVersion("1.0")]
     [ApiController]
     public class SkillsController : ControllerBase
     {
@@ -16,6 +17,7 @@ namespace ProfessionalPortfolio.API.Controllers.V1
         }
 
         [HttpPost]
+        //TODO: Make this a protected route by adding the Authorize attirbute here but only user with Admin role should be able to access it
         public async Task<IActionResult> PostMany(List<string> skills)
         {
             var response = await _skillService.AddSkills(skills);
@@ -28,32 +30,25 @@ namespace ProfessionalPortfolio.API.Controllers.V1
         }
 
         [HttpGet]
+        //TODO: Make this a protected route by adding the Authorize attirbute here but only user with Admin role should be able to access it
         public IActionResult GetAll()
         {
             return Ok(_skillService.GetAllSkills());
         }
 
-        //TODO: Action Method: PostUserSkills
-        //When a POST request is made to the "api/v1/skills/user" endpoint:
         [HttpPost("user")]
-        //1. Extract UserId from the request header("X-UserId").
-        //2. Extract the AddUserSkillCommand object from the request body.
-        public async Task<IActionResult> PostUserSkills([FromHeader(Name = "X-UserId")] Guid userId,
-                                                        [FromBody] AddUserSkillCommand command)
+        //TODO: Make this a protected route by adding the Authorize attirbute here
+        public async Task<IActionResult> PostUserSkills([FromBody] AddUserSkillCommand command)
         {
-            //3. Call the skill service method AddSkillsAsync with the UserId from step 1 and the command from step 2.
-            var result = await _skillService.AddSkillsAsync(userId, command);
-            //4. Wait for the service to return a response.
-            //5. Return StatusCode() using:
-            //      - The status code from the service response as the first parameter
-            //      - The response body from the service as the second parameter
+            var result = await _skillService.AddSkillsAsync(command);
             return StatusCode(result.Status, result);
         }
 
         [HttpGet("user")]
+        //TODO: Make this a protected route by adding the Authorize attirbute here
         public async Task<IActionResult> GetUserSkills([FromHeader(Name = "X-UserId")] Guid userId)
         {
-            var response = await _skillService.GetUserSkillsAsync(userId);
+            var response = await _skillService.GetUserSkillsAsync();
             return StatusCode(response.Status, response);
         }
     }

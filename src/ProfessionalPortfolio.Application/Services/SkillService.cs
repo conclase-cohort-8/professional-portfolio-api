@@ -1,26 +1,27 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Http;
+using ProfessionalPortfolio.Application.Commands;
 using ProfessionalPortfolio.Application.Common;
 using ProfessionalPortfolio.Application.Common.Interfaces;
+using ProfessionalPortfolio.Application.DTOs;
 using ProfessionalPortfolio.Application.Services.Interfaces;
-using ProfessionalPortfolio.Application.Skills.Commands;
-using ProfessionalPortfolio.Application.Skills.Dtos;
 using ProfessionalPortfolio.Domain.Entities;
+using System.Security.Claims;
 
 namespace ProfessionalPortfolio.Application.Services
 {
     public class SkillService : ISkillService
     {
-        private readonly ISkillRepository _skillRepository;
-        private readonly IUserRepository _userRepository;
+        private readonly IRepositoryManager _repository;
         private readonly IMapper _mapper;
+        private readonly ClaimsPrincipal? _user;
 
-        public SkillService(ISkillRepository skillRepository,
-                            IUserRepository userRepository,
-                            IMapper mapper)
+        public SkillService(IRepositoryManager repository,
+                            IMapper mapper, IHttpContextAccessor accessor)
         {
-            _skillRepository = skillRepository;
-            _userRepository = userRepository;
+            _repository = repository;
             _mapper = mapper;
+            _user = accessor.HttpContext?.User;
         }
 
         public async Task<ApiResult<List<SkillInfoDto>>> AddSkills(List<string> commands)
@@ -32,7 +33,7 @@ namespace ProfessionalPortfolio.Application.Services
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .ToList();
 
-            var existingSkills = _skillRepository.GetAsQueryable()
+            var existingSkills = _repository.Skill.GetAsQueryable()
                 .Where(s => normalizedNames.Contains(s.Name));
 
             var missing = normalizedNames
@@ -44,7 +45,7 @@ namespace ProfessionalPortfolio.Application.Services
                 Name = skill
             }).ToList();
 
-            await _skillRepository.CreateRangeAsync(newSkills);
+            await _repository.Skill.CreateRangeAsync(newSkills);
 
             var skillnfo = _mapper.Map<List<SkillInfoDto>>(newSkills);
             return new ApiResult<List<SkillInfoDto>>(skillnfo);
@@ -52,7 +53,7 @@ namespace ProfessionalPortfolio.Application.Services
 
         public ApiResult<List<SkillInfoDto>> GetAllSkills()
         {
-            var skills = _skillRepository.GetAsQueryable()
+            var skills = _repository.Skill.GetAsQueryable()
                 .OrderBy(s => s.Name)
                 .ToList();
 
@@ -60,17 +61,23 @@ namespace ProfessionalPortfolio.Application.Services
             return new ApiResult<List<SkillInfoDto>>(skillnfo);
         }
 
-        public async Task<ApiResult<List<string>>> GetUserSkillsAsync(Guid userId)
+        public async Task<ApiResult<List<string>>> GetUserSkillsAsync()
         {
-            var userSkills = await _skillRepository
+            //TODO: Get the logged in user id below. See the AddEducation method in EducationService.cs
+            var userId = Guid.Empty;
+            //TODO: Return status 403, and message "You are not allowed to access this resources" if userId is Guid.Empty
+            var userSkills = await _repository.Skill
                 .GetUserSkills(userId);
 
             return new ApiResult<List<string>>(userSkills);
         }
 
-        public async Task<ApiResult<string>> AddSkillsAsync(Guid userId, AddUserSkillCommand command)
+        public async Task<ApiResult<string>> AddSkillsAsync(AddUserSkillCommand command)
         {
-            if(userId == Guid.Empty || command == null)
+            //TODO: Get the logged in user id below. See the AddEducation method in EducationService.cs
+            var userId = Guid.Empty;
+            //TODO: Return status 403, and message "You are not allowed to access this resources" if userId is Guid.Empty
+            if (userId == Guid.Empty || command == null)
             {
                 return new ApiResult<string>("Invalid input", 400);
             }
@@ -80,13 +87,13 @@ namespace ProfessionalPortfolio.Application.Services
                 return new ApiResult<string>("You cannot add skill for a different user.", 403);
             }
 
-            var user = await _userRepository.GetByIdAsync(userId);
+            var user = await _repository.User.GetByIdAsync(userId);
             if(user == null)
             {
                 return new ApiResult<string>("User not found", 404);
             }
 
-            var skill = await _skillRepository.GetByIdAsync(command.SkillId);
+            var skill = await _repository.Skill.GetByIdAsync(command.SkillId);
             if (skill == null)
             {
                 return new ApiResult<string>("Skill not found", 404);
@@ -98,7 +105,7 @@ namespace ProfessionalPortfolio.Application.Services
                 SkillId = skill.Id
             };
 
-            await _skillRepository.AddUserSkill(userSkill);
+            await _repository.Skill.AddUserSkill(userSkill);
             return new ApiResult<string>($"{ skill.Name } successfully added to user skills.", 200, true);
         }
     }

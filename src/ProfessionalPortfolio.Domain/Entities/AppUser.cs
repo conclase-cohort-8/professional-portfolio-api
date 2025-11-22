@@ -16,17 +16,21 @@ namespace ProfessionalPortfolio.Domain.Entities
         [StringLength(100)]
         [EmailAddress]
         public string Email { get; set; } = string.Empty;
+        [Required]
+        public string PasswordHash { get; set; } = string.Empty;
         [Required,StringLength(20)]
-        public string Role { get; set; } = Roles.User.ToString();
-        [Required, StringLength(20)]
-        public string Status { get; set; } = Statuses.Active.ToString();
+        public string Role { get; set; } = Roles.Admin.ToString();
+        [Required]
+        public Statuses Status { get; set; } = Statuses.Active;
 
         // Navigation properties
         // 1 to Many relationship
         public List<Education> Educations { get; set; } = [];
+        public List<Project> Projects { get; set; } = [];
+        public List<Experience> Experiences { get; set; } = [];
         //1 to 1 relationship
         public Location? Location { get; set; }
-
+        //many to many relationship
         public List<UserSkill> UserSkills { get; set; } = [];
     }
 }

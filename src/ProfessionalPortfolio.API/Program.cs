@@ -1,10 +1,20 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Versioning;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
+using ProfessionalPortfolio.API.Extensions;
 using ProfessionalPortfolio.Application.Common.Interfaces;
 using ProfessionalPortfolio.Application.Mapper;
 using ProfessionalPortfolio.Application.Services;
 using ProfessionalPortfolio.Application.Services.Interfaces;
+using ProfessionalPortfolio.Application.Settings;
+using ProfessionalPortfolio.Domain.Entities;
 using ProfessionalPortfolio.Infrastructure.Persistence;
 using ProfessionalPortfolio.Infrastructure.Repositories;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,31 +26,130 @@ builder.Services.AddDbContext<SqlServerDbContext>(options => options.UseSqlServe
 builder.Services.AddAutoMapper(m =>
 {
 }, typeof(MapperProfile));
-builder.Services.AddScoped<InMemoryDbContext>();
-builder.Services.AddScoped<IUserRepository, UserRepository>();
-builder.Services.AddScoped<IEducationRepository, EducationRepository>();
-builder.Services.AddScoped<ISkillRepository,  SkillRepository>();
+builder.Services.AddScoped<IPasswordHasher<AppUser>, PasswordHasher<AppUser>>();
+// Configure Versioning
+builder.Services.AddApiVersioning(opt =>
+{
+    opt.ReportApiVersions = true;
+    opt.AssumeDefaultVersionWhenUnspecified = true;
+    opt.DefaultApiVersion = new ApiVersion(1, 0);
+    opt.ApiVersionReader = ApiVersionReader.Combine(
+        new HeaderApiVersionReader("api-version"),
+        new HeaderApiVersionReader("X-Version"),
+        new UrlSegmentApiVersionReader());
+});
+
+builder.Services.AddVersionedApiExplorer(opt =>
+{
+    opt.GroupNameFormat = "'v'VVV";
+    opt.SubstituteApiVersionInUrl = true;
+});
+
+builder.Services.AddScoped<IRepositoryManager, RepositoryManager>();
+//Configure HttpContext
+builder.Services.AddHttpContextAccessor();
 // Other services here
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IEducationService, EducationService>();
 builder.Services.AddScoped<ISkillService, SkillService>();
+builder.Services.AddScoped<IExperienceService, ExperienceService>();
+builder.Services.AddScoped<IProjectService, ProjectService>();
+
+//Add Authentication configuration
+//JWT: header: type: JWT, alg: HMAC256, payload: userId, email, roles, signature
+var jwtSection = builder.Configuration.GetSection("JwtSettings");
+builder.Services.Configure<JwtOptions>(jwtSection);
+var jwtSettings = jwtSection.Get<JwtOptions>() ??
+    throw new ArgumentNullException("JwtSettings");
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+
+            ValidIssuer = jwtSettings.Issuer,
+            ValidAudience = jwtSettings.Audience,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Secret))
+        };
+    });
+
+builder.Services.AddAuthorization();
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(option =>
+{
+    option.AddSecurityDefinition(JwtBearerDefaults.AuthenticationScheme, new OpenApiSecurityScheme
+    {
+        Description = "JWT Authentication",
+        Name = "Authorization",
+        In = ParameterLocation.Header,
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = JwtBearerDefaults.AuthenticationScheme,
+        BearerFormat = "JWT"
+    });
+
+    option.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = JwtBearerDefaults.AuthenticationScheme
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
+
+    option.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "Portfolio API",
+        Version = "v1",
+        Description = "Portfolio API v1.0",
+        Contact = new OpenApiContact
+        {
+            Name = "Conclase Cohort 8",
+            Email = "info@email.com"
+        }
+    });
+    option.SwaggerDoc("v2", new OpenApiInfo
+    {
+        Title = "Portfolio API",
+        Version = "v2",
+        Description = "Portfolio API v2.0",
+        Contact = new OpenApiContact
+        {
+            Name = "Conclase Cohort 8",
+            Email = "info@email.com"
+        }
+    });
+});
 
 var app = builder.Build();
-
+await app.SeedAsync();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(opt =>
+    {
+        opt.SwaggerEndpoint("/swagger/v1/swagger.json", "v1");
+        opt.SwaggerEndpoint("/swagger/v2/swagger.json", "v2");
+    });
 }
 
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

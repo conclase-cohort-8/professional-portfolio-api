@@ -1,12 +1,13 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using ProfessionalPortfolio.Application.Commands;
 using ProfessionalPortfolio.Application.Services.Interfaces;
-using ProfessionalPortfolio.Application.Users.Commands;
 
 namespace ProfessionalPortfolio.API.Controllers.V1
 {
-    [Route("api/v1/auth")]
+    [Route("api/v{version:apiversion}/auth")]
+    [ApiVersion("1.0")]
     [ApiController]
-    public class AuthController : ControllerBase
+    public class AuthController : ApiControllerBase
     {
         private readonly IUserService _userService;
 
@@ -23,8 +24,14 @@ namespace ProfessionalPortfolio.API.Controllers.V1
                 return BadRequest("Invalid request");
             }
             var registerResult = await _userService.RegisterAsync(command);
-            //var json = JsonConverter.
             return Ok(registerResult);
+        }
+
+        [HttpPost("login")]
+        public async Task<IActionResult> LoginAsyn([FromBody] LoginCommand command)
+        {
+            var loginResult = await _userService.LoginAsync(command);
+            return FromResponse(loginResult);
         }
     }
 }

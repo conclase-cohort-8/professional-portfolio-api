@@ -1,6 +1,7 @@
-﻿using ProfessionalPortfolio.Application.Users.Commands;
-using ProfessionalPortfolio.Application.Users.Dtos;
-using ProfessionalPortfolio.Application.Users.Queries;
+﻿using ProfessionalPortfolio.Application.Commands;
+using ProfessionalPortfolio.Application.Common;
+using ProfessionalPortfolio.Application.DTOs;
+using ProfessionalPortfolio.Application.Queries;
 
 namespace ProfessionalPortfolio.Application.Services.Interfaces
 {
@@ -9,7 +10,9 @@ namespace ProfessionalPortfolio.Application.Services.Interfaces
         Task Delete(Guid id);
         List<UserInfoDto> GetAll(GetAllUsersQuery query);
         Task<UserInfoDto?> GetById(Guid id);
+        Task<UserInfoDtoV2?> GetByIdV2Async(Guid id);
+        Task<ApiResult<TokenDto>> LoginAsync(LoginCommand command);
         Task<UserInfoDto> RegisterAsync(RegisterUserCommand command);
-        Task<UserInfoDto?> Update(Guid id, UserUpdateCommand command);
+        Task<UserInfoDto?> Update(UserUpdateCommand command);
     }
 }
