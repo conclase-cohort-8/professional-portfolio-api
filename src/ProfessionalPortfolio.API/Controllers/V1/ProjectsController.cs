@@ -24,17 +24,17 @@ namespace ProfessionalPortfolio.API.Controllers.V1
             return FromResponse(response);
         }
 
-        // TODO: Implement endpoint to add a new Project record.
+        // TODO: POST - Implement endpoint to add a new Project record.
         // Paramter: AddProjectCommand command, from body
         // Method: Post
         // Path: /
         // Returns: see above
         // Note: Call UpdateProject() from the service and await it
 
-        // TODO: Implement endpoint to update an existing Project record.
+        // TODO: PATCH - Implement endpoint to update an existing Project record.
         // Parameter: Guid id, from route
         // Paramter: UpdateProjectCommand command, from body
-        // Method: Put
+        // Method: Patch
         // Path: /{id}
         // Returns: see above
         // Note: Call UpdateProject(id, command) from the service and await it

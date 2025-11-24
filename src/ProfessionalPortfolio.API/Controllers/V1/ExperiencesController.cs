@@ -24,17 +24,17 @@ namespace ProfessionalPortfolio.API.Controllers.V1
             return FromResponse(response);
         }
 
-        // TODO: Implement endpoint to add a new Experience record.
+        // TODO POST: Implement endpoint to add a new Experience record.
         // Paramter: AddExperienceCommand command, from body
         // Method: Post
         // Path: /
         // Returns: see above
         // Note: Call AddExperience() from the service and await it
 
-        // TODO: Implement endpoint to update an existing Experience record.
+        // TODO PATCH: Implement endpoint to update an existing Experience record.
         // Parameter: Guid id, from route
         // Paramter: UpdateExperienceCommand command, from body
-        // Method: Put
+        // Method: Patch
         // Path: /{id}
         // Returns: see above
         // Note: Call UpdateExperience(id, command) from the service and await it
