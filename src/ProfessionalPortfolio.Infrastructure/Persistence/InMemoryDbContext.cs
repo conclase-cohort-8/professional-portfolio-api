@@ -9,6 +9,7 @@ namespace ProfessionalPortfolio.Infrastructure.Persistence
         {
             new AppUser
             {
+                Id = new Guid("83bdc8b8-7cef-402c-8931-e35726c59692"),
                 FirstName = "Toba",
                 LastName = "Ojo",
                 OtherName = "Rufus",
@@ -16,5 +17,7 @@ namespace ProfessionalPortfolio.Infrastructure.Persistence
                 Role = Roles.Admin.ToString()
             }
         };
+
+        public static List<Education> Educations { get; set; } = [];
     }
 }

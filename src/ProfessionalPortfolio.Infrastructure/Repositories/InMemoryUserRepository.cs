@@ -8,7 +8,7 @@ namespace ProfessionalPortfolio.Infrastructure.Repositories
     {
         private List<AppUser> _dbContext;
 
-        public InMemoryUserRepository() 
+        public InMemoryUserRepository()
         {
             _dbContext = InMemoryDbContext.Users ?? [];
         }
@@ -24,10 +24,28 @@ namespace ProfessionalPortfolio.Infrastructure.Repositories
             return _dbContext.AsQueryable();
         }
 
-        public async Task<AppUser?> GetByEmail(string email)
+        public async Task<AppUser?> GetByEmailAsync(string email)
         {
             await Task.CompletedTask;
             return _dbContext.FirstOrDefault(u => u.Email == email);
+        }
+
+        public async Task<AppUser?> GetByIdAsync(Guid id)
+        {
+            await Task.CompletedTask;
+            return _dbContext.FirstOrDefault(u => u.Id == id);
+        }
+
+        public async Task UpdateAsync(AppUser user)
+        {
+            await Task.CompletedTask;
+            _dbContext.Add(user);
+        }
+
+        public async Task DeleteAsync(AppUser user)
+        {
+            await Task.CompletedTask;
+            _dbContext.Remove(user);
         }
     }
 }

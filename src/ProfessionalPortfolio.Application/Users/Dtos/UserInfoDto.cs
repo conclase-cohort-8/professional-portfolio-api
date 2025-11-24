@@ -13,8 +13,8 @@ namespace ProfessionalPortfolio.Application.Users.Dtos
 
         public UserInfoDto(AppUser user)
         {
-            var middleInitial = !string.IsNullOrWhiteSpace(user.OtherName) ? 
-                string.Concat(" ", user.OtherName.First(), ".") : 
+            var middleInitial = !string.IsNullOrWhiteSpace(user.OtherName) ?
+                string.Concat(" ", user.OtherName.First(), ".") :
                 string.Empty;
 
             Id = user.Id;

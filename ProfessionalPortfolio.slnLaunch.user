@@ -1,0 +1,24 @@
+[
+  {
+    "Name": "New Profile",
+    "Projects": [
+      {
+        "Path": "src\\ProfessionalPortfolio.API\\ProfessionalPortfolio.API.csproj",
+        "Action": "Start",
+        "DebugTarget": "http"
+      },
+      {
+        "Path": "src\\ProfessionalPortfolio.Domain\\ProfessionalPortfolio.Domain.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "src\\ProfessionalPortfolio.Application\\ProfessionalPortfolio.Application.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "src\\ProfessionalPortfolio.Infrastructure\\ProfessionalPortfolio.Infrastructure.csproj",
+        "Action": "Start"
+      }
+    ]
+  }
+]
