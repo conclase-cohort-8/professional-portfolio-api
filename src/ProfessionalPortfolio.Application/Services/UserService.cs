@@ -24,13 +24,20 @@ namespace ProfessionalPortfolio.Application.Services
                 return null!;
             }
 
-            // check for existing user
-            // You check email by calling GetByEmail() method from the repository
-            // 2. If existing user not null, return null as the response
-            var existingUser = await _repository.GetByEmailAsync(command.EmailAddress);
-            if(existingUser != null)
+            var appUser = _mapper.Map<AppUser>(command);
+            appUser.PasswordHash = _hasher.HashPassword(appUser, command.Password);
+            var otp = Extensions.GenerateOtp();
+            var (hash, salt) = Extensions.HashOtp(otp);
+            await _repository.User.AddAsync(appUser);
+            return _mapper.Map<UserInfoDto>(appUser);
+        }
+
+        public async Task<ApiResult<TokenDto>> LoginAsync(LoginCommand command)
+        {
+            var user = await _repository.User.GetByEmailAsync(command.Email);
+            if(user == null)
             {
-                return null!;
+                return new ApiResult<TokenDto>("No user found with the specified email address", 404);
             }
 
             // 3. if the user is null, Create a new AppUser object
@@ -108,7 +115,61 @@ namespace ProfessionalPortfolio.Application.Services
                 throw new Exception("User is null");
             }
 
-            await _repository.DeleteAsync(user);
+        public void VerifyAsync()
+        {
+            //if (string.IsNullOrWhiteSpace(request.Otp) || string.IsNullOrWhiteSpace(request.Email))
+            //{
+            //    throw new BadRequestException(ResponseMessages.InvalidRequest);
+            //}
+
+            //var user = await _userManager.FindByEmailAsync(request.Email) ??
+            //    throw new NotFoundException(ResponseMessages.UserNotFoundWithEmail);
+
+            //var otpEntry = await _crudKit
+            //    .AsQueryable<OtpEntry>(o => o.UserId.Equals(user.Id) && o.Type == OtpType.AccountVerification, true)
+            //.OrderByDescending(o => o.ExpiresAt)
+            //    .FirstOrDefaultAsync(cancellationToken) ?? throw new NotFoundException(ResponseMessages.InvalidOTP);
+
+            //bool isValid = CommonHelpers.VerifyOtp(request.Otp, otpEntry.OtpHash, otpEntry.OtpSalt)
+            //              && otpEntry.ExpiresAt.IsLaterThan(DateTime.UtcNow);
+
+            //if (!isValid)
+            //{
+            //    throw new ForbiddenException(ResponseMessages.OTPExpired);
+            //}
+
+            //user.EmailConfirmed = true;
+            //user.UpdatedAt = DateTime.UtcNow;
+            //user.Status = UserStatus.Active;
+            //await _userManager.UpdateAsync(user);
+            //await _crudKit.DeleteAsync(otpEntry, cancellation: cancellationToken);
+
+            //return new ApiResult<string>("Account successfully verified. Please proceed to login");
+        }
+
+        private string GenerateAccessToken(AppUser user)
+        {
+            //jwt: header, payload, signature
+            var claims = new List<Claim>
+            {
+                new(ClaimTypes.Name, user.Email),
+                new(ClaimTypes.Role, user.Role),
+                new(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new(JwtRegisteredClaimNames.Sub, user.Id.ToString())
+            };
+
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtOptions.Secret));
+            var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+            var token = new JwtSecurityToken(
+                issuer: _jwtOptions.Issuer,
+                audience: _jwtOptions.Audience,
+                claims: claims,
+                expires: DateTime.UtcNow.AddHours(_jwtOptions.Expires),
+                signingCredentials: credentials
+            );
+
+            return new JwtSecurityTokenHandler().WriteToken(token);
         }
     }
 }
