@@ -14,6 +14,8 @@ namespace ProfessionalPortfolio.Domain.Entities
         // Navigation properties
         // 1 to Many relationship
         public List<Education> Educations { get; set; } = [];
+
+        public List<Experience> Experiences { get; set; } = [];
         //1 to 1 relationship
         public Location? Location { get; set; }
 

@@ -15,6 +15,7 @@ builder.Services.AddScoped<InMemoryDbContext>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IEducationRepository, EducationRepository>();
 builder.Services.AddScoped<ISkillRepository,  SkillRepository>();
+builder.Services.AddScoped<IExperienceRepository, ExperienceRepository>();
 // Other services here
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IEducationService, EducationService>();
