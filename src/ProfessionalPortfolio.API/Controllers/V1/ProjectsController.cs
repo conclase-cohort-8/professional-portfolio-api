@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using ProfessionalPortfolio.Application.Commands;
 using ProfessionalPortfolio.Application.Services.Interfaces;
+using ProfessionalPortfolio.Domain.Entities;
 
 namespace ProfessionalPortfolio.API.Controllers.V1
 {
@@ -25,11 +27,19 @@ namespace ProfessionalPortfolio.API.Controllers.V1
         }
 
         // TODO: POST - Implement endpoint to add a new Project record.
+        [HttpPost("AddProject")]
+        [Authorize]
+        public async Task<IActionResult> Post([FromBody] AddProjectCommand command)
         // Paramter: AddProjectCommand command, from body
         // Method: Post
         // Path: /
         // Returns: see above
         // Note: Call UpdateProject() from the service and await it
+        {
+            var response = await _service.UpdateProject();
+            return FromResponse(response);
+        }
+
 
         // TODO: PATCH - Implement endpoint to update an existing Project record.
         // Parameter: Guid id, from route
