@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ProfessionalPortfolio.Infrastructure.Persistence;
 
@@ -11,9 +12,11 @@ using ProfessionalPortfolio.Infrastructure.Persistence;
 namespace ProfessionalPortfolio.Infrastructure.Migrations
 {
     [DbContext(typeof(SqlServerDbContext))]
-    partial class SqlServerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251125204212_Added_OTP_Model")]
+    partial class Added_OTP_Model
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -54,18 +57,6 @@ namespace ProfessionalPortfolio.Infrastructure.Migrations
 
                     b.Property<string>("PasswordHash")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ProfilePicture")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ProfilePicturePublicId")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ResumePublicId")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ResumeUrl")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Role")

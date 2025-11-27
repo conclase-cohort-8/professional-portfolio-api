@@ -12,6 +12,7 @@ namespace ProfessionalPortfolio.Infrastructure.Persistence
         public DbSet<UserSkill> UserSkills { get; set; }
         public DbSet<Experience> Experiences { get; set; }
         public DbSet<Project> Projects { get; set; }
+        public DbSet<OtpEntry> Otps { get; set; }
 
         public SqlServerDbContext(DbContextOptions<SqlServerDbContext> options) :
             base(options)

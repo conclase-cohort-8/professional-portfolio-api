@@ -6,7 +6,6 @@ using ProfessionalPortfolio.Application.Common.Interfaces;
 using ProfessionalPortfolio.Application.DTOs;
 using ProfessionalPortfolio.Application.Services.Interfaces;
 using ProfessionalPortfolio.Domain.Entities;
-using System;
 using System.Security.Claims;
 
 namespace ProfessionalPortfolio.Application.Services
@@ -28,12 +27,13 @@ namespace ProfessionalPortfolio.Application.Services
         public async Task<ApiResult<EducationInfoDto>> AddEducation(AddEducationCommand command)
         {
             var userId = _user.GetLoggedInUserId();
-            //TODO: Return status 403, and message "You are not allowed to access this resources" if userId is Guid.Empty
+            if (userId == Guid.Empty)
+            {
+                return new ApiResult<EducationInfoDto>("You are not allowed to access this resources", 403);
+            }
+
             if (command == null) return new ApiResult<EducationInfoDto>("Invalid input.", 400);
 
-            // TODO: Go to BaseEducationCommand, add validations to the properties.Institution, Degre and Course are
-            // required with maximum character length of 200 each.
-            // Use the custom ValidDate attribute on StartDate and EndDate properties
             var user = await _repository.User.GetByIdAsync(userId);
             if (user == null) return new ApiResult<EducationInfoDto>("User not found.", 404);
 
@@ -41,38 +41,49 @@ namespace ProfessionalPortfolio.Application.Services
             education.UserId = userId;
 
             await _repository.Education.AddAsync(education);
-            //TODO: Use automapper to return the result. The configuration is already added
-            return new ApiResult<EducationInfoDto>(new EducationInfoDto());
+            return new ApiResult<EducationInfoDto>(_mapper.Map<EducationInfoDto>(education));
         }
 
         public ApiResult<List<EducationInfoDto>> GetEducations()
         {
-            //TODO: Get the logged in user id below. See the AddEducation method above
-            var userId = Guid.Empty;
-            //TODO: Return status 403, and message "You are not allowed to access this resources" if userId is Guid.Empty
+            var userId = _user.GetLoggedInUserId();
+            if (userId == Guid.Empty)
+            {
+                return new ApiResult<List<EducationInfoDto>>("You are not allowed to access this resources", 403);
+            }
+
             var educations = _repository.Education.GetAll()
                 .Where(e => e.UserId == userId)
                 .OrderByDescending(e => e.StartDate)
                 .ToList();
 
-            //TODO: Use automapper to return the result. The configuration is already added
-            return new ApiResult<List<EducationInfoDto>>(educations
-                .Select(e => new EducationInfoDto()).ToList());
+            return new ApiResult<List<EducationInfoDto>>(_mapper.Map<List<EducationInfoDto>>(educations));
         }
 
-        public Task<EducationInfoDto> UpdateEducation(UpdateEducationCommand command)
+        public async Task<ApiResult<string>> UpdateEducation(Guid id, UpdateEducationCommand command)
         {
-            throw new NotImplementedException();
-        }
+            var userId = _user.GetLoggedInUserId();
+            if (userId == Guid.Empty)
+            {
+                return new ApiResult<string>("You are not allowed to access this resources", 403);
+            }
+            
+            var education = await _repository.Education.GetByIdAsync(id);
+            if (education == null)
+            {
+                return new ApiResult<string>("Record not found", 404);
+            }
 
-        private bool IsValid(AddEducationCommand command)
-        {
-            return !string.IsNullOrEmpty(command.Institution) &&
-                !string.IsNullOrEmpty(command.Course) &&
-                !string.IsNullOrEmpty(command.Degree) &&
-                (!command.EndDate.HasValue || 
-                    (command.EndDate.HasValue && command.EndDate.Value > command.StartDate)
-                );
+            if(userId != education.UserId)
+            {
+                return new ApiResult<string>("Access denied", 403);
+            }
+
+            _mapper.Map(command, education);
+            education.UpdatedOn = DateTime.UtcNow;
+            
+            await _repository.Education.UpdateAsync(education);
+            return new ApiResult<string>("Education record successfully updated");
         }
     }
 }

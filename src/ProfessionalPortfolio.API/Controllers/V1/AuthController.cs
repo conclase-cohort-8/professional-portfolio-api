@@ -33,5 +33,12 @@ namespace ProfessionalPortfolio.API.Controllers.V1
             var loginResult = await _userService.LoginAsync(command);
             return FromResponse(loginResult);
         }
+
+        [HttpPatch("verify")]
+        public async Task<IActionResult> VerifyAsyn([FromBody] AccountVerificationCommand command)
+        {
+            var result = await _userService.VerifyAccountAsync(command);
+            return FromResponse(result);
+        }
     }
 }

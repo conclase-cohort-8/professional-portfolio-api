@@ -21,7 +21,13 @@ namespace ProfessionalPortfolio.Domain.Entities
         [Required,StringLength(20)]
         public string Role { get; set; } = Roles.Admin.ToString();
         [Required]
-        public Statuses Status { get; set; } = Statuses.Active;
+        public Statuses Status { get; set; } = Statuses.Pending;
+
+        public string? ProfilePicture { get; set; }
+        public string? ProfilePicturePublicId { get; set; }
+
+        public string? ResumeUrl { get; set; }
+        public string? ResumePublicId { get; set; }
 
         // Navigation properties
         // 1 to Many relationship

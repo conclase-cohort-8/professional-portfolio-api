@@ -10,5 +10,7 @@ namespace ProfessionalPortfolio.Application.DTOs
         public DateTime RegistrationDate { get; set; }
         public string Status { get; set; } = string.Empty;
         public string Role { get; set; } = string.Empty;
+        public string? ProfilePicture { get; set; }
+        public string? ResumeUrl { get; set; }
     }
 }

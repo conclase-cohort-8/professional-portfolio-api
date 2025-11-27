@@ -12,7 +12,7 @@ namespace ProfessionalPortfolio.Application.Attributes
                 return ValidationResult.Success;
             }
 
-            var disposableDomains = new[] { "outlook.com", "yahoo.com", "yahoomail.com" };
+            var disposableDomains = new[] { "yahoo.com", "yahoomail.com" };
             var domain = email.Split('@').LastOrDefault();
             if(domain != null && disposableDomains.Contains(domain.ToLower()))
             {

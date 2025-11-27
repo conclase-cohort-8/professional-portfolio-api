@@ -63,9 +63,12 @@ namespace ProfessionalPortfolio.Application.Services
 
         public async Task<ApiResult<List<string>>> GetUserSkillsAsync()
         {
-            //TODO: Get the logged in user id below. See the AddEducation method in EducationService.cs
-            var userId = Guid.Empty;
-            //TODO: Return status 403, and message "You are not allowed to access this resources" if userId is Guid.Empty
+            var userId = _user.GetLoggedInUserId();
+            if(userId == Guid.Empty)
+            {
+                return new ApiResult<List<string>>("You are not allowed to access this resources", 403);
+            }
+
             var userSkills = await _repository.Skill
                 .GetUserSkills(userId);
 
@@ -74,15 +77,13 @@ namespace ProfessionalPortfolio.Application.Services
 
         public async Task<ApiResult<string>> AddSkillsAsync(AddUserSkillCommand command)
         {
-            //TODO: Get the logged in user id below. See the AddEducation method in EducationService.cs
-            var userId = Guid.Empty;
-            //TODO: Return status 403, and message "You are not allowed to access this resources" if userId is Guid.Empty
-            if (userId == Guid.Empty || command == null)
+            var userId = _user.GetLoggedInUserId();
+            if (userId == Guid.Empty)
             {
-                return new ApiResult<string>("Invalid input", 400);
+                return new ApiResult<string>("You are not allowed to access this resources", 403);
             }
 
-            if(userId != command.UserId)
+            if (userId != command.UserId)
             {
                 return new ApiResult<string>("You cannot add skill for a different user.", 403);
             }

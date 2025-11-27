@@ -1,6 +1,6 @@
+using Mailjet.Client;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Versioning;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -12,6 +12,7 @@ using ProfessionalPortfolio.Application.Services;
 using ProfessionalPortfolio.Application.Services.Interfaces;
 using ProfessionalPortfolio.Application.Settings;
 using ProfessionalPortfolio.Domain.Entities;
+using ProfessionalPortfolio.Infrastructure.ExternalServices;
 using ProfessionalPortfolio.Infrastructure.Persistence;
 using ProfessionalPortfolio.Infrastructure.Repositories;
 using System.Text;
@@ -32,7 +33,7 @@ builder.Services.AddApiVersioning(opt =>
 {
     opt.ReportApiVersions = true;
     opt.AssumeDefaultVersionWhenUnspecified = true;
-    opt.DefaultApiVersion = new ApiVersion(1, 0);
+    opt.DefaultApiVersion = new Microsoft.AspNetCore.Mvc.ApiVersion(1, 0);
     opt.ApiVersionReader = ApiVersionReader.Combine(
         new HeaderApiVersionReader("api-version"),
         new HeaderApiVersionReader("X-Version"),
@@ -55,6 +56,23 @@ builder.Services.AddScoped<ISkillService, SkillService>();
 builder.Services.AddScoped<IExperienceService, ExperienceService>();
 builder.Services.AddScoped<IProjectService, ProjectService>();
 
+//Mail config
+builder.Services.Configure<MailKitSettings>(builder.Configuration.GetSection("MailKitSettings"));
+builder.Services.AddScoped<IEmailService, EmailService>();
+
+//Mailjet config
+var mailJetSection = builder.Configuration.GetSection("MailJet");
+builder.Services.Configure<MailJetSettings>(mailJetSection);
+var mailJetSettings = mailJetSection.Get<MailJetSettings>() ?? 
+    throw new ArgumentNullException("MailJetSettings");
+builder.Services.AddHttpClient<IMailjetClient, MailjetClient>(opt =>
+{
+    opt.UseBasicAuthentication(mailJetSettings.ApiKey, mailJetSettings.ApiSecret);
+});
+
+//Cloudinary config
+builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection("CloudinarySettings"));
+builder.Services.AddScoped<IUploadService, UploadService>();
 //Add Authentication configuration
 //JWT: header: type: JWT, alg: HMAC256, payload: userId, email, roles, signature
 var jwtSection = builder.Configuration.GetSection("JwtSettings");

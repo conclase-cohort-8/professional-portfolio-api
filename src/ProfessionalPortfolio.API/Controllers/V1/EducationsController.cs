@@ -32,7 +32,15 @@ namespace ProfessionalPortfolio.API.Controllers.V1
         {
             var response = await _service.AddEducation(command);
             return FromResponse(response);
-        }        
+        }
+
+        [HttpPatch("{id}")]
+        [Authorize]
+        public async Task<IActionResult> Patch([FromRoute] Guid id, [FromBody] UpdateEducationCommand command)
+        {
+            var response = await _service.UpdateEducation(id, command);
+            return FromResponse(response);
+        }
         #endregion
     }
 }
