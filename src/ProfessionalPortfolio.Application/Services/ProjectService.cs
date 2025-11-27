@@ -51,24 +51,43 @@ namespace ProfessionalPortfolio.Application.Services
             //Remember to await the call
             return new ApiResult<string>("Project record successfully added");
         }
-
+    
         public async Task<ApiResult<string>> UpdateProject(Guid id, UpdateProjectCommand command)
         {
             var userId = _user.GetLoggedInUserId();
             // TODO: Check if the userId is an empty Guid, return 
             // Message: You're not allowed to perform this action
             //Status: 403
-            var project = await _repository.Project.GetByIdAsync(id);
-            // TODO return message: record not found and status: 404 if project is null
+            if (userId == Guid.Empty)
+            {
+                return new ApiResult<string>("You are not alowed to perform this action", 403);
+            }
 
+            var project = await _repository.Project.GetByIdAsync(id);
             //TODO: if the userId and project.UserId are not the same, return
+            if (project == null)
+            {
+                return new ApiResult<string>("Record not found", 404);
+            }
             // message: access denied, status: 403
+            if (project.UserId != userId)
+
+            {
+                return new ApiResult<string>("Access denied", 403);
+            }
             _mapper.Map(command, project);
+
             //TODO: update the project object  UpdatedOn property and assign it to the date time utn now
+
+            project.UpdatedOn = DateTime.UtcNow;
 
             //TODO: Call the Project.UpdateAsync() method from the _repository to insert the record
             //Remember to await the call
+            await _repository.Project.UpdateAsync(project);
             return new ApiResult<string>("Project record successfully updated");
+
+
+
         }
     }
 }
