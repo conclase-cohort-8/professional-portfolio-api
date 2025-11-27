@@ -6,7 +6,7 @@ namespace ProfessionalPortfolio.Domain.Entities
     public class OtpEntry : BaseEntity
     {
         [Required]
-        public Guid UserId { get; set; }
+        public string UserId { get; set; } = string.Empty;
         [Required]
         public string OtpHash { get; set; } = string.Empty;
         [Required]

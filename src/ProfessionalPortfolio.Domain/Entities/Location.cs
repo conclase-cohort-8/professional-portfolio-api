@@ -14,7 +14,7 @@ namespace ProfessionalPortfolio.Domain.Entities
         public string Country { get; set; } = string.Empty;
 
         // Nav Prop
-        public Guid UserId { get; set; }
+        public string UserId { get; set; } = string.Empty;
         public AppUser? User { get; set; }
     }
 }

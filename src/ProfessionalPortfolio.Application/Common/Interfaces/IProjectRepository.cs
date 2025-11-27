@@ -8,7 +8,7 @@ namespace ProfessionalPortfolio.Application.Common.Interfaces
         Task Deprecate(Project project);
         IQueryable<Project> GetAll();
         Task<Project?> GetByIdAsync(Guid id);
-        Task<List<Project>> GetByUserIdAsync(Guid userId);
+        Task<List<Project>> GetByUserIdAsync(string userId);
         Task UpdateAsync(Project project);
     }
 }

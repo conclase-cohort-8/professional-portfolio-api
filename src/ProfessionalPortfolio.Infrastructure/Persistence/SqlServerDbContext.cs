@@ -1,11 +1,13 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using ProfessionalPortfolio.Domain.Entities;
+using ProfessionalPortfolio.Infrastructure.Configuration;
 
 namespace ProfessionalPortfolio.Infrastructure.Persistence
 {
-    public class SqlServerDbContext : DbContext
+    public class SqlServerDbContext : IdentityDbContext<AppUser>
     {
-        public DbSet<AppUser> Users { get; set; }
         public DbSet<Education> Educations { get; set; }
         public DbSet<Location> Locations { get; set; }
         public DbSet<Skill> Skills { get; set; }
@@ -36,6 +38,8 @@ namespace ProfessionalPortfolio.Infrastructure.Persistence
                 .HasOne(us => us.Skill)
                 .WithMany(s => s.UserSkills)
                 .HasForeignKey(us => us.SkillId);
+
+            modelBuilder.ApplyConfiguration(new RoleConfiguration());
         }
     }
 }

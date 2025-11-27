@@ -23,7 +23,7 @@ namespace ProfessionalPortfolio.Infrastructure.Repositories
         public IQueryable<Experience> GetAll()
             => _dbContext.Experiences.Where(e => !e.IsDeleted);
 
-        public async Task<List<Experience>> GetByUserIdAsync(Guid userId)
+        public async Task<List<Experience>> GetByUserIdAsync(string userId)
             => await _dbContext.Experiences
             .Where(ex => ex.UserId == userId && !ex.IsDeleted)
             .ToListAsync();
@@ -41,6 +41,7 @@ namespace ProfessionalPortfolio.Infrastructure.Repositories
         public async Task Deprecate(Experience experience)
         {
             experience.IsDeleted = true;
+            experience.UpdatedOn = DateTime.UtcNow;
             _dbContext.Experiences.Update(experience);
             await _dbContext.SaveChangesAsync();
         }

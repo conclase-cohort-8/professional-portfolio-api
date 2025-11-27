@@ -1,4 +1,4 @@
 ﻿namespace ProfessionalPortfolio.Application.Commands
 {
-    public record AddUserSkillCommand(Guid UserId, Guid SkillId);
+    public record AddUserSkillCommand(string UserId, Guid SkillId);
 }

@@ -23,6 +23,19 @@ var builder = WebApplication.CreateBuilder(args);
 
 var connectionString = builder.Configuration.GetConnectionString("Default");
 builder.Services.AddDbContext<SqlServerDbContext>(options => options.UseSqlServer(connectionString));
+// Configure Identity
+builder.Services.AddIdentity<AppUser, IdentityRole>(opt =>
+{
+    opt.Password.RequireNonAlphanumeric = true;
+    opt.Password.RequiredLength = 8;
+    opt.Password.RequireUppercase = true;
+    opt.Password.RequireLowercase = true;
+
+    opt.User.RequireUniqueEmail = true;
+    
+    opt.SignIn.RequireConfirmedEmail = true;
+}).AddEntityFrameworkStores<SqlServerDbContext>()
+.AddDefaultTokenProviders();
 //
 builder.Services.AddAutoMapper(m =>
 {

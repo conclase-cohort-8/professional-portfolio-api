@@ -27,7 +27,7 @@ namespace ProfessionalPortfolio.Infrastructure.Repositories
             => await _dbContext.Projects
             .FirstOrDefaultAsync(p => p.Id == id && !p.IsDeleted);
 
-        public async Task<List<Project>> GetByUserIdAsync(Guid userId)
+        public async Task<List<Project>> GetByUserIdAsync(string userId)
             => await _dbContext.Projects
             .Where(p => p.UserId == userId && !p.IsDeleted)
             .ToListAsync();

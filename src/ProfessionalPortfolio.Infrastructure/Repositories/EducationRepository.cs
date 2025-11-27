@@ -36,6 +36,7 @@ namespace ProfessionalPortfolio.Infrastructure.Repositories
         public async Task Deprecate(Education education)
         {
             education.IsDeleted = true;
+            education.UpdatedOn = DateTime.UtcNow;
             _dbContext.Update(education);
             await _dbContext.SaveChangesAsync();
         }

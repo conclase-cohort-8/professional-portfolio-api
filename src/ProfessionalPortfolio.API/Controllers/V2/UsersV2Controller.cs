@@ -16,7 +16,7 @@ namespace ProfessionalPortfolio.API.Controllers.V2
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetById([FromRoute] Guid id)
+        public async Task<IActionResult> GetById([FromRoute] string id)
         {
             var response = await _userService.GetByIdV2Async(id);
             if (response == null)

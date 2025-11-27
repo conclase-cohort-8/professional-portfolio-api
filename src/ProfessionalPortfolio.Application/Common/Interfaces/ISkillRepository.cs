@@ -8,7 +8,8 @@ namespace ProfessionalPortfolio.Application.Common.Interfaces
         Task CreateRangeAsync(List<Skill> skills);
         IQueryable<Skill> GetAsQueryable();
         Task<Skill?> GetByIdAsync(Guid id);
-        Task<List<string>> GetUserSkills(Guid userId);
+        Task<UserSkill?> GetUserSkill(string userId, Guid skillId);
+        Task<List<string>> GetUserSkills(string userId);
         Task RemoveAsync(UserSkill userSkill);
     }
 }

@@ -44,16 +44,16 @@ namespace ProfessionalPortfolio.Infrastructure.ExternalServices
         {
             var param = new RawUploadParams
             {
-                File = new FileDescription(fileName, stream),
-                PublicId = $"images/{fileName}",
-                UniqueFilename = false,
+                File = new FileDescription(originalFileName, stream),
+                PublicId = $"documents/{fileName}",
+                UniqueFilename = true,
                 UseFilename = false,
                 AccessMode = "public"
             };
 
             var response = await _cloudinary.UploadAsync(param);
             return response != null && response.StatusCode == System.Net.HttpStatusCode.OK ?
-                (true, response.PublicId, response.SecureUrl.ToString()) :
+                (true, response.SecureUrl.ToString(), response.PublicId) :
                 (false, string.Empty, string.Empty);
         }
 

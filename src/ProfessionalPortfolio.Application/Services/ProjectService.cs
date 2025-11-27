@@ -26,9 +26,9 @@ namespace ProfessionalPortfolio.Application.Services
         public async Task<ApiResult<List<ProjectInfoDto>>> GetAllAsync()
         {
             var userId = _user.GetLoggedInUserId();
-            if (userId == Guid.Empty)
+            if (!string.IsNullOrWhiteSpace(userId))
             {
-                return new ApiResult<List<ProjectInfoDto>>("Access denied", 403);
+                return new ApiResult<List<ProjectInfoDto>>("You are not allowed to access this resources", 403);
             }
 
             var experiences = await _repository.Project

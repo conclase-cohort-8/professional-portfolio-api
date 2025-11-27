@@ -15,6 +15,7 @@
     <PackageReference Include="CloudinaryDotNet" Version="1.27.9" />
     <PackageReference Include="Mailjet.Api" Version="3.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.21" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.21" />
   </ItemGroup>
 
 </Project>
