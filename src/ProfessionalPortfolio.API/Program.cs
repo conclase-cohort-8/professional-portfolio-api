@@ -28,11 +28,15 @@ builder.Services.AddIdentity<AppUser, IdentityRole>(opt =>
 {
     opt.Password.RequireNonAlphanumeric = true;
     opt.Password.RequiredLength = 8;
+    opt.Password.RequireDigit = true;
     opt.Password.RequireUppercase = true;
     opt.Password.RequireLowercase = true;
 
     opt.User.RequireUniqueEmail = true;
-    
+
+    opt.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(10);
+    opt.Lockout.MaxFailedAccessAttempts = 3;
+
     opt.SignIn.RequireConfirmedEmail = true;
 }).AddEntityFrameworkStores<SqlServerDbContext>()
 .AddDefaultTokenProviders();

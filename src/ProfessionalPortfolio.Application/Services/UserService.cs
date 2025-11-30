@@ -310,8 +310,8 @@ namespace ProfessionalPortfolio.Application.Services
             var claims = new List<Claim>
             {
                 new(ClaimTypes.Name, user.Email!),
-                new(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                new(JwtRegisteredClaimNames.Sub, user.Id.ToString())
+                new(ClaimTypes.NameIdentifier, user.Id),
+                new(JwtRegisteredClaimNames.Sub, user.Id)
             };
 
             claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
