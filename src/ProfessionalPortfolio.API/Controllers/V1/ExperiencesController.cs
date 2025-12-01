@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using ProfessionalPortfolio.Application.Commands;
 using ProfessionalPortfolio.Application.Services.Interfaces;
 
 namespace ProfessionalPortfolio.API.Controllers.V1
@@ -31,6 +32,15 @@ namespace ProfessionalPortfolio.API.Controllers.V1
         // Returns: see above
         // Note: Call AddExperience() from the service and await it
 
+        [HttpPost]
+        [Authorize]
+        public async Task<IActionResult> AddExperience(AddExperienceCommand command)
+        {
+            var response = await _service.AddExperience(command);
+            return FromResponse(response);
+        }
+
+
         // TODO PATCH: Implement endpoint to update an existing Experience record.
         // Parameter: Guid id, from route
         // Paramter: UpdateExperienceCommand command, from body
@@ -38,5 +48,14 @@ namespace ProfessionalPortfolio.API.Controllers.V1
         // Path: /{id}
         // Returns: see above
         // Note: Call UpdateExperience(id, command) from the service and await it
+
+        [HttpPatch ("{id}")]
+        public async Task <IActionResult> UpdateExperience(
+                                                            [FromRoute] Guid id , 
+                                                            [FromBody] UpdateExperienceCommand command)
+        {
+            var response = await _service.UpdateExperience(id, command);
+            return FromResponse(response);
+        }
     }
 }
