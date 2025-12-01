@@ -97,7 +97,11 @@ builder.Services.Configure<JwtOptions>(jwtSection);
 var jwtSettings = jwtSection.Get<JwtOptions>() ??
     throw new ArgumentNullException("JwtSettings");
 
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
     .AddJwtBearer(options =>
     {
         options.TokenValidationParameters = new TokenValidationParameters
