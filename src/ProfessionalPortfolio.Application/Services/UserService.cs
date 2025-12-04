@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
@@ -11,6 +12,7 @@ using ProfessionalPortfolio.Application.DTOs;
 using ProfessionalPortfolio.Application.Queries;
 using ProfessionalPortfolio.Application.Services.Interfaces;
 using ProfessionalPortfolio.Application.Settings;
+using ProfessionalPortfolio.Application.Validations;
 using ProfessionalPortfolio.Domain.Entities;
 using ProfessionalPortfolio.Domain.Enums;
 using System.IdentityModel.Tokens.Jwt;
@@ -74,6 +76,12 @@ namespace ProfessionalPortfolio.Application.Services
 
         public async Task<ApiResult<string>> RegisterAsync(RegisterUserCommand command)
         {
+            var validator = new RegisterUserCommandValidator().Validate(command);
+            if (!validator.IsValid)
+            {
+                return new ApiResult<string>(validator.Errors.FirstOrDefault()?.ErrorMessage ?? "Invalid input");
+            }
+
             var existingUser = await _userManager.FindByEmailAsync(command.EmailAddress);
             if(existingUser != null)
             {
@@ -85,14 +93,14 @@ namespace ProfessionalPortfolio.Application.Services
             var createResult = await _userManager.CreateAsync(appUser, command.Password);
             if (!createResult.Succeeded)
             {
-                return new ApiResult<string>(createResult.Errors.FirstOrDefault()?.Description ?? "Registreation failed");
+                return new ApiResult<string>(createResult.Errors.FirstOrDefault()?.Description ?? "Registreation failed", 400);
             }
 
             var roleResult = await _userManager.AddToRoleAsync(appUser, Roles.User.ToString());
             if (!roleResult.Succeeded)
             {
                 await _userManager.DeleteAsync(appUser);
-                return new ApiResult<string>(roleResult.Errors.FirstOrDefault()?.Description ?? "Registreation failed");
+                return new ApiResult<string>(roleResult.Errors.FirstOrDefault()?.Description ?? "Registreation failed", 400);
             }
 
             //Generate OTP
@@ -199,6 +207,35 @@ namespace ProfessionalPortfolio.Application.Services
             }
 
             return _mapper.Map<List<UserInfoDto>>(users);
+        }
+
+        public async Task<ApiResult<PagedResult<UserInfoDto>>> GetPagedUser(GetAllUsersQuery query)
+        {
+            var users = _userManager.Users;
+            var total = await users.CountAsync();
+            var items = await users
+                .Filter(query.Search)
+                .Sort(query.SortBy, query.IsAscending)
+                .Skip((query.Page - 1) * query.PageSize)
+                .Take(query.PageSize)
+                .Select(u => new UserInfoDto
+                {
+                    Id = u.Id,
+                    Name = $"{u.FirstName} {u.LastName}",
+                    Email = u.Email!,
+                    ProfilePicture = u.ProfilePicture,
+                    ResumeUrl = u.ResumeUrl,
+                    Status = u.Status.ToString(),
+                    RegistrationDate = u.CreatedOn
+                }).ToListAsync();
+
+            return new ApiResult<PagedResult<UserInfoDto>>(data: new PagedResult<UserInfoDto>
+            {
+                Total = total,
+                Page = query.Page,
+                PageSize = query.PageSize,
+                Items = items
+            });
         }
 
         public async Task<ApiResult<string>> Update(UserUpdateCommand command)

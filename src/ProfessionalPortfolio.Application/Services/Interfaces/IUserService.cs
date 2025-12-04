@@ -13,6 +13,7 @@ namespace ProfessionalPortfolio.Application.Services.Interfaces
         Task<UserInfoDto?> GetById(string id);
         Task<UserInfoDtoV2?> GetByIdV2Async(string id);
         Task<ApiResult<UserInfoDto>> GetLoggedInUser();
+        Task<ApiResult<PagedResult<UserInfoDto>>> GetPagedUser(GetAllUsersQuery query);
         Task<ApiResult<TokenDto>> LoginAsync(LoginCommand command);
         Task<ApiResult<string>> RegisterAsync(RegisterUserCommand command);
         Task<ApiResult<string>> Update(UserUpdateCommand command);

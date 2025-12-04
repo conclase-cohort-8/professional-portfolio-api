@@ -1,6 +1,10 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.AspNetCore.Identity;
+using ProfessionalPortfolio.Application.Common;
 using ProfessionalPortfolio.Domain.Entities;
 using ProfessionalPortfolio.Domain.Enums;
+using System.Net;
+using System.Text.Json;
 
 namespace ProfessionalPortfolio.API.Extensions
 {
@@ -45,6 +49,28 @@ namespace ProfessionalPortfolio.API.Extensions
 
                 return;
             }
+        }
+
+        internal static void UseGlobalExceptionHandler(this WebApplication app, ILogger<Program> logger)
+        {
+            app.UseExceptionHandler(builder =>
+            {
+                builder.Run(async ctx =>
+                {
+                    ctx.Response.ContentType = "application/json";
+                    var ctxFeature = ctx.Features.Get<IExceptionHandlerFeature>();
+
+                    if(ctxFeature != null)
+                    {
+                        logger.LogError("An error occured: {Error}", ctxFeature.Error);
+                        var message = ctxFeature.Error.Message;
+
+                        ctx.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
+
+                        await ctx.Response.WriteAsync(JsonSerializer.Serialize(new ApiResult<string>(message, ctx.Response.StatusCode)));
+                    }
+                });
+            });
         }
     }
 }

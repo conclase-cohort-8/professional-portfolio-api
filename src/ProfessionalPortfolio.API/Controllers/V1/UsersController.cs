@@ -25,18 +25,23 @@ namespace ProfessionalPortfolio.API.Controllers.V1
             return FromResponse(await _userService.GetLoggedInUser());
         }
 
-        [HttpPost("upload-image")]
+        [HttpPost("upload-file")]
         [Authorize]
         public async Task<IActionResult> UploadProfilePicture(IFormFile image)
         {
             return FromResponse(await _userService.UploadProfileImage(image));
         }
 
+        /// <summary>
+        /// Uploads User CV
+        /// </summary>
+        /// <param name="file">Uploaded file</param>
+        /// <returns></returns>
         [HttpPost("upload-cv")]
         [Authorize]
-        public async Task<IActionResult> UploadUserCv(IFormFile image)
+        public async Task<IActionResult> UploadUserCv(IFormFile file)
         {
-            return FromResponse(await _userService.UploadUserCv(image));
+            return FromResponse(await _userService.UploadUserCv(file));
         }
 
         [HttpGet]

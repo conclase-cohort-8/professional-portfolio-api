@@ -15,10 +15,26 @@ using ProfessionalPortfolio.Domain.Entities;
 using ProfessionalPortfolio.Infrastructure.ExternalServices;
 using ProfessionalPortfolio.Infrastructure.Persistence;
 using ProfessionalPortfolio.Infrastructure.Repositories;
+using Serilog;
+using Serilog.Events;
+using Serilog.Formatting.Json;
+using System.Reflection;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
+Log.Logger = new LoggerConfiguration()
+    .Enrich.FromLogContext()
+    .WriteTo.Console()
+    .WriteTo.File(
+        new JsonFormatter(),
+        "logs/logs-.json", 
+        rollingInterval: RollingInterval.Day,
+        restrictedToMinimumLevel: LogEventLevel.Information
+        )
+    .CreateLogger();
+
+builder.Host.UseSerilog();
 // Add your services to the container.
 
 var connectionString = builder.Configuration.GetConnectionString("Default");
@@ -97,7 +113,11 @@ builder.Services.Configure<JwtOptions>(jwtSection);
 var jwtSettings = jwtSection.Get<JwtOptions>() ??
     throw new ArgumentNullException("JwtSettings");
 
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
     .AddJwtBearer(options =>
     {
         options.TokenValidationParameters = new TokenValidationParameters
@@ -120,6 +140,10 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(option =>
 {
+    var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    option.IncludeXmlComments(xmlPath);
+
     option.AddSecurityDefinition(JwtBearerDefaults.AuthenticationScheme, new OpenApiSecurityScheme
     {
         Description = "JWT Authentication",
@@ -170,6 +194,21 @@ builder.Services.AddSwaggerGen(option =>
 });
 
 var app = builder.Build();
+var logger = app.Services.GetRequiredService<ILogger<Program>>();
+app.UseGlobalExceptionHandler(logger);
+app.UseSerilogRequestLogging(options =>
+{
+    options.MessageTemplate = "HTTP {RequestMethod} {RequestPath} responded {StatusCode} in {Elapsed:0.0000} ms.";
+    options.EnrichDiagnosticContext = (dCtx, httpCtx) =>
+    {
+        dCtx.Set("RequestHost", httpCtx.Request.Host.Value);
+        dCtx.Set("Scheme", httpCtx.Request.Scheme);
+        dCtx.Set("UserAgent", httpCtx.Response.Headers["User-Agent"].ToString());
+        dCtx.Set("ClientIP", httpCtx.Connection.RemoteIpAddress?.ToString());
+        dCtx.Set("Endpoint", httpCtx.GetEndpoint()?.DisplayName);
+    };
+});
+
 await app.SeedAsync();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

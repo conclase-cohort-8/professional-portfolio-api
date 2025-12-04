@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using ProfessionalPortfolio.Application.Queries;
 using ProfessionalPortfolio.Application.Services.Interfaces;
 
 namespace ProfessionalPortfolio.API.Controllers.V2
@@ -6,7 +7,7 @@ namespace ProfessionalPortfolio.API.Controllers.V2
     [Route("api/v{version:apiversion}/users")]
     [ApiVersion("2.0")]
     [ApiController]
-    public class UsersV2Controller : ControllerBase
+    public class UsersV2Controller : ApiControllerBase
     {
         private readonly IUserService _userService;
 
@@ -24,6 +25,17 @@ namespace ProfessionalPortfolio.API.Controllers.V2
                 return NotFound("User not dound");
             }
             return Ok(response);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetPaged([FromQuery] GetAllUsersQuery query)
+        {
+            var response = await _userService.GetPagedUser(query);
+            if (response.Success)
+            {
+                throw new Exception("Something went wrong. Please try again later");
+            }
+            return FromResponse(response);
         }
     }
 }
