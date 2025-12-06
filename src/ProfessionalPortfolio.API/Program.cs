@@ -32,6 +32,11 @@ Log.Logger = new LoggerConfiguration()
         rollingInterval: RollingInterval.Day,
         restrictedToMinimumLevel: LogEventLevel.Information
         )
+    .WriteTo.Elasticsearch(new Serilog.Sinks.Elasticsearch.ElasticsearchSinkOptions(new Uri("http://localhost:9200"))
+    {
+        AutoRegisterTemplate = true,
+        IndexFormat = $"professional-portfolio-api-{DateTime.UtcNow:yyyy}"
+    })
     .CreateLogger();
 
 builder.Host.UseSerilog();
