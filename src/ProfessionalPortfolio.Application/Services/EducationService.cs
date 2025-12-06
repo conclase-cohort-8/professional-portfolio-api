@@ -31,6 +31,8 @@ namespace ProfessionalPortfolio.Application.Services
 
         public async Task<ApiResult<EducationInfoDto>> AddEducation(AddEducationCommand command)
         {
+            //TODO: validate the AddEducationCommand using the EducationCommandValidator and return the appropriate response if input not valid
+            // See line 79 (RegisterAsync() method) in the UserService.cs above for tips
             var userId = _user.GetLoggedInUserId();
             if (!string.IsNullOrWhiteSpace(userId))
             {
@@ -67,6 +69,9 @@ namespace ProfessionalPortfolio.Application.Services
 
         public async Task<ApiResult<string>> UpdateEducation(Guid id, UpdateEducationCommand command)
         {
+            //TODO: validate the UpdateEducationCommand using the EducationCommandValidator and return the appropriate response if input not valid
+            // See line 79 (RegisterAsync() method) in the UserService.cs above for tips
+
             var userId = _user.GetLoggedInUserId();
             if (!string.IsNullOrWhiteSpace(userId))
             {

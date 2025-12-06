@@ -122,6 +122,8 @@ namespace ProfessionalPortfolio.Application.Services
 
         public async Task<ApiResult<TokenDto>> LoginAsync(LoginCommand command)
         {
+            //TODO: validate the LoginCommand using the LoginCommandValidator and return the appropriate response if input not valid
+            // See line 79 above for tips
             var user = await _userManager.FindByEmailAsync(command.Email);
             if(user == null)
             {
@@ -149,6 +151,9 @@ namespace ProfessionalPortfolio.Application.Services
 
         public async Task<ApiResult<string>> VerifyAccountAsync(AccountVerificationCommand command)
         {
+            //TODO: validate the AccountVerificationCommand using the AccountVerificationCommandValidator and return the appropriate response if input not valid
+            // See line 79 above for tips
+
             var user = await _userManager.FindByEmailAsync(command.Email);
             if(user == null)
             {
@@ -240,6 +245,9 @@ namespace ProfessionalPortfolio.Application.Services
 
         public async Task<ApiResult<string>> Update(UserUpdateCommand command)
         {
+            //TODO: validate the UserUpdateCommand using the UserUpdateCommandValidator and return the appropriate response if input not valid
+            // See line 79 above for tips
+
             var userId = _user.GetLoggedInUserId();
             if (!string.IsNullOrWhiteSpace(userId))
             {

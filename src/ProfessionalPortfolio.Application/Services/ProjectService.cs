@@ -38,6 +38,9 @@ namespace ProfessionalPortfolio.Application.Services
 
         public async Task<ApiResult<string>> AddProject(AddProjectCommand command)
         {
+            //TODO: validate the AddProjectCommand using the ProjectCommandValidator and return the appropriate response if input not valid
+            // See line 79 (RegisterAsync() method) in the UserService.cs above for tips
+
             var userId = _user.GetLoggedInUserId();
             // TODO: Check if the userId is an empty Guid, return 
             // Message: You're not allowed to perform this action
@@ -54,6 +57,9 @@ namespace ProfessionalPortfolio.Application.Services
 
         public async Task<ApiResult<string>> UpdateProject(Guid id, UpdateProjectCommand command)
         {
+            //TODO: validate the UpdateProjectCommand using the ProjectCommandValidator and return the appropriate response if input not valid
+            // See line 79 (RegisterAsync() method) in the UserService.cs above for tips
+
             var userId = _user.GetLoggedInUserId();
             // TODO: Check if the userId is an empty Guid, return 
             // Message: You're not allowed to perform this action
