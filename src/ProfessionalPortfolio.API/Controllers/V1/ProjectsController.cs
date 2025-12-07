@@ -26,27 +26,14 @@ namespace ProfessionalPortfolio.API.Controllers.V1
             return FromResponse(response);
         }
 
-        // TODO: POST - Implement endpoint to add a new Project record.
+
         [HttpPost("AddProject")]
         [Authorize]
-        public async Task<IActionResult> Post([FromBody] AddProjectCommand command)
-        // Paramter: AddProjectCommand command, from body
-        // Method: Post
-        // Path: /
-        // Returns: see above
-        // Note: Call UpdateProject() from the service and await it
+        public async Task<IActionResult> PostAddProject([FromBody] AddProjectCommand command)
+
         {
-            var response = await _service.UpdateProject();
-            return FromResponse(response);
+            var result = await _service.AddProject(command);
+            return StatusCode(result.Status, result);
         }
-
-
-        // TODO: PATCH - Implement endpoint to update an existing Project record.
-        // Parameter: Guid id, from route
-        // Paramter: UpdateProjectCommand command, from body
-        // Method: Patch
-        // Path: /{id}
-        // Returns: see above
-        // Note: Call UpdateProject(id, command) from the service and await it
     }
 }

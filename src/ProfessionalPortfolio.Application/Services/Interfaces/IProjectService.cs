@@ -10,7 +10,5 @@ namespace ProfessionalPortfolio.Application.Services.Interfaces
         Task<ApiResult<string>> AddProject(AddProjectCommand command);
         Task<ApiResult<List<ProjectInfoDto>>> GetAllAsync();
         Task<ApiResult<string>> UpdateProject(Guid id, UpdateProjectCommand command);
-        Task<IActionResult> UpdateProject(IProjectService service);
-        Task<ApiResult<object>> UpdateProject();
     }
 }
