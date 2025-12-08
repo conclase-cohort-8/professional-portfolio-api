@@ -36,7 +36,7 @@ namespace ProfessionalPortfolio.Application.Services
             return new ApiResult<List<ProjectInfoDto>>(_mapper.Map<List<ProjectInfoDto>>(experiences));
         }
 
-        public async Task<ApiResult<string>> AddProject(AddProjectCommand command)
+        public async Task<ApiResult<string>> AddProject( AddProjectCommand command)
         {
             var userId = _user.GetLoggedInUserId();
             // TODO: Check if the userId is an empty Guid, return 
@@ -49,6 +49,21 @@ namespace ProfessionalPortfolio.Application.Services
 
             //TODO: Call the Project.AddAsync() method from the _repository to insert the record
             //Remember to await the call
+            //if (userId  == Guid.Empty)
+            //{
+            //    return new ApiResult<string>("You are not allowed to perform this action", 403);
+            //}
+            //var project = await _repository.Project.GetByIdAsync(id);
+            //if (project == null)
+            //{
+            //    return new ApiResult<string>("Record not found", 404);
+            //}
+            //if(project.UserId != userId)
+            //{
+            //    return new ApiResult<string>("Access denied", 403);
+            //}
+            //_mapper.Map(command, project);
+            //await _repository.Project.UpdateAsync(project);
             return new ApiResult<string>("Project record successfully added");
         }
 
