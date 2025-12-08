@@ -1,6 +1,6 @@
+using Mailjet.Client;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Versioning;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -12,16 +12,55 @@ using ProfessionalPortfolio.Application.Services;
 using ProfessionalPortfolio.Application.Services.Interfaces;
 using ProfessionalPortfolio.Application.Settings;
 using ProfessionalPortfolio.Domain.Entities;
+using ProfessionalPortfolio.Infrastructure.ExternalServices;
 using ProfessionalPortfolio.Infrastructure.Persistence;
 using ProfessionalPortfolio.Infrastructure.Repositories;
+using Serilog;
+using Serilog.Events;
+using Serilog.Formatting.Json;
+using System.Reflection;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
+Log.Logger = new LoggerConfiguration()
+    .Enrich.FromLogContext()
+    .WriteTo.Console()
+    .WriteTo.File(
+        new JsonFormatter(),
+        "logs/logs-.json", 
+        rollingInterval: RollingInterval.Day,
+        restrictedToMinimumLevel: LogEventLevel.Information
+        )
+    .WriteTo.Elasticsearch(new Serilog.Sinks.Elasticsearch.ElasticsearchSinkOptions(new Uri("http://localhost:9200"))
+    {
+        AutoRegisterTemplate = true,
+        IndexFormat = $"professional-portfolio-api-{DateTime.UtcNow:yyyy}"
+    })
+    .CreateLogger();
+
+builder.Host.UseSerilog();
 // Add your services to the container.
 
 var connectionString = builder.Configuration.GetConnectionString("Default");
 builder.Services.AddDbContext<SqlServerDbContext>(options => options.UseSqlServer(connectionString));
+// Configure Identity
+builder.Services.AddIdentity<AppUser, IdentityRole>(opt =>
+{
+    opt.Password.RequireNonAlphanumeric = true;
+    opt.Password.RequiredLength = 8;
+    opt.Password.RequireDigit = true;
+    opt.Password.RequireUppercase = true;
+    opt.Password.RequireLowercase = true;
+
+    opt.User.RequireUniqueEmail = true;
+
+    opt.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(10);
+    opt.Lockout.MaxFailedAccessAttempts = 3;
+
+    opt.SignIn.RequireConfirmedEmail = true;
+}).AddEntityFrameworkStores<SqlServerDbContext>()
+.AddDefaultTokenProviders();
 //
 builder.Services.AddAutoMapper(m =>
 {
@@ -32,7 +71,7 @@ builder.Services.AddApiVersioning(opt =>
 {
     opt.ReportApiVersions = true;
     opt.AssumeDefaultVersionWhenUnspecified = true;
-    opt.DefaultApiVersion = new ApiVersion(1, 0);
+    opt.DefaultApiVersion = new Microsoft.AspNetCore.Mvc.ApiVersion(1, 0);
     opt.ApiVersionReader = ApiVersionReader.Combine(
         new HeaderApiVersionReader("api-version"),
         new HeaderApiVersionReader("X-Version"),
@@ -55,6 +94,23 @@ builder.Services.AddScoped<ISkillService, SkillService>();
 builder.Services.AddScoped<IExperienceService, ExperienceService>();
 builder.Services.AddScoped<IProjectService, ProjectService>();
 
+//Mail config
+builder.Services.Configure<MailKitSettings>(builder.Configuration.GetSection("MailKitSettings"));
+builder.Services.AddScoped<IEmailService, EmailService>();
+
+//Mailjet config
+var mailJetSection = builder.Configuration.GetSection("MailJet");
+builder.Services.Configure<MailJetSettings>(mailJetSection);
+var mailJetSettings = mailJetSection.Get<MailJetSettings>() ?? 
+    throw new ArgumentNullException("MailJetSettings");
+builder.Services.AddHttpClient<IMailjetClient, MailjetClient>(opt =>
+{
+    opt.UseBasicAuthentication(mailJetSettings.ApiKey, mailJetSettings.ApiSecret);
+});
+
+//Cloudinary config
+builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection("CloudinarySettings"));
+builder.Services.AddScoped<IUploadService, UploadService>();
 //Add Authentication configuration
 //JWT: header: type: JWT, alg: HMAC256, payload: userId, email, roles, signature
 var jwtSection = builder.Configuration.GetSection("JwtSettings");
@@ -62,7 +118,11 @@ builder.Services.Configure<JwtOptions>(jwtSection);
 var jwtSettings = jwtSection.Get<JwtOptions>() ??
     throw new ArgumentNullException("JwtSettings");
 
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
     .AddJwtBearer(options =>
     {
         options.TokenValidationParameters = new TokenValidationParameters
@@ -85,6 +145,10 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(option =>
 {
+    var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    option.IncludeXmlComments(xmlPath);
+
     option.AddSecurityDefinition(JwtBearerDefaults.AuthenticationScheme, new OpenApiSecurityScheme
     {
         Description = "JWT Authentication",
@@ -135,6 +199,21 @@ builder.Services.AddSwaggerGen(option =>
 });
 
 var app = builder.Build();
+var logger = app.Services.GetRequiredService<ILogger<Program>>();
+app.UseGlobalExceptionHandler(logger);
+app.UseSerilogRequestLogging(options =>
+{
+    options.MessageTemplate = "HTTP {RequestMethod} {RequestPath} responded {StatusCode} in {Elapsed:0.0000} ms.";
+    options.EnrichDiagnosticContext = (dCtx, httpCtx) =>
+    {
+        dCtx.Set("RequestHost", httpCtx.Request.Host.Value);
+        dCtx.Set("Scheme", httpCtx.Request.Scheme);
+        dCtx.Set("UserAgent", httpCtx.Response.Headers["User-Agent"].ToString());
+        dCtx.Set("ClientIP", httpCtx.Connection.RemoteIpAddress?.ToString());
+        dCtx.Set("Endpoint", httpCtx.GetEndpoint()?.DisplayName);
+    };
+});
+
 await app.SeedAsync();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

@@ -1,9 +1,10 @@
-﻿using ProfessionalPortfolio.Domain.Enums;
+﻿using Microsoft.AspNetCore.Identity;
+using ProfessionalPortfolio.Domain.Enums;
 using System.ComponentModel.DataAnnotations;
 
 namespace ProfessionalPortfolio.Domain.Entities
 {
-    public class AppUser : BaseEntity
+    public class AppUser : IdentityUser
     {
         [Required]
         [StringLength(100)]
@@ -13,15 +14,13 @@ namespace ProfessionalPortfolio.Domain.Entities
         public string LastName { get; set; } = string.Empty;
         public string? OtherName { get; set; }
         [Required]
-        [StringLength(100)]
-        [EmailAddress]
-        public string Email { get; set; } = string.Empty;
-        [Required]
-        public string PasswordHash { get; set; } = string.Empty;
-        [Required,StringLength(20)]
-        public string Role { get; set; } = Roles.Admin.ToString();
-        [Required]
-        public Statuses Status { get; set; } = Statuses.Active;
+        public Statuses Status { get; set; } = Statuses.Pending;
+
+        public string? ProfilePicture { get; set; }
+        public string? ProfilePicturePublicId { get; set; }
+
+        public string? ResumeUrl { get; set; }
+        public string? ResumePublicId { get; set; }
 
         // Navigation properties
         // 1 to Many relationship
@@ -32,5 +31,9 @@ namespace ProfessionalPortfolio.Domain.Entities
         public Location? Location { get; set; }
         //many to many relationship
         public List<UserSkill> UserSkills { get; set; } = [];
+
+        public DateTime CreatedOn { get; set; } = DateTime.UtcNow;
+        public DateTime? UpdatedOn { get; set; }
+        public bool IsDeleted { get; set; }
     }
 }

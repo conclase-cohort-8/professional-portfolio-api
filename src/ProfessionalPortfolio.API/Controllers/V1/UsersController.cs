@@ -9,13 +9,39 @@ namespace ProfessionalPortfolio.API.Controllers.V1
     [Route("api/v{version:apiversion}/users")]
     [ApiVersion("1.0")]
     [ApiController]
-    public class UsersController : ControllerBase
+    public class UsersController : ApiControllerBase
     {
         private readonly IUserService _userService;
 
         public UsersController(IUserService userService)
         {
             _userService = userService;
+        }
+
+        [HttpGet("me")]
+        [Authorize]
+        public async Task<IActionResult> GetLoggedInUser()
+        {
+            return FromResponse(await _userService.GetLoggedInUser());
+        }
+
+        [HttpPost("upload-file")]
+        [Authorize]
+        public async Task<IActionResult> UploadProfilePicture(IFormFile image)
+        {
+            return FromResponse(await _userService.UploadProfileImage(image));
+        }
+
+        /// <summary>
+        /// Uploads User CV
+        /// </summary>
+        /// <param name="file">Uploaded file</param>
+        /// <returns></returns>
+        [HttpPost("upload-cv")]
+        [Authorize]
+        public async Task<IActionResult> UploadUserCv(IFormFile file)
+        {
+            return FromResponse(await _userService.UploadUserCv(file));
         }
 
         [HttpGet]
@@ -26,7 +52,7 @@ namespace ProfessionalPortfolio.API.Controllers.V1
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetById([FromRoute] Guid id)
+        public async Task<IActionResult> GetById([FromRoute] string id)
         {
             var response = await _userService.GetById(id);
             if(response == null)
@@ -37,7 +63,7 @@ namespace ProfessionalPortfolio.API.Controllers.V1
         }
 
         [HttpPut]
-        //TODO: Make this a protected route by adding the Authorize attirbute here
+        [Authorize]
         public async Task<IActionResult> Update([FromBody] UserUpdateCommand command)
         {
             var response = await _userService.Update(command);
@@ -50,8 +76,8 @@ namespace ProfessionalPortfolio.API.Controllers.V1
         }
 
         [HttpDelete("{id}")]
-        //TODO: Make this a protected route by adding the Authorize attirbute here but only user with Admin role should be able to access it
-        public async Task<IActionResult> Delete(Guid id)
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Delete(string id)
         {
             await _userService.Delete(id);
             return NoContent();

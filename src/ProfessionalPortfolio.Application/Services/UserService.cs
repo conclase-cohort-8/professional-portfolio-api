@@ -1,6 +1,8 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using ProfessionalPortfolio.Application.Commands;
@@ -10,7 +12,9 @@ using ProfessionalPortfolio.Application.DTOs;
 using ProfessionalPortfolio.Application.Queries;
 using ProfessionalPortfolio.Application.Services.Interfaces;
 using ProfessionalPortfolio.Application.Settings;
+using ProfessionalPortfolio.Application.Validations;
 using ProfessionalPortfolio.Domain.Entities;
+using ProfessionalPortfolio.Domain.Enums;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -19,67 +23,167 @@ namespace ProfessionalPortfolio.Application.Services
 {
     public class UserService : IUserService
     {
+        private const long MaxResourceSize = 2048000;
+        private readonly List<string> allowedFileType = new List<string> { ".png", ".jpeg", ".jpg" };
+        private readonly List<string> allowedDocType = new List<string> { ".pdf", ".docx", ".doc" };
+
+
         private readonly IRepositoryManager _repository;
         private readonly IMapper _mapper;
-        private readonly IPasswordHasher<AppUser> _hasher;
+        private readonly IEmailService _emailService;
         private readonly JwtOptions _jwtOptions;
         private readonly ClaimsPrincipal? _user;
+        private readonly IHostEnvironment _host;
+        private readonly IUploadService _uploadService;
+        private readonly UserManager<AppUser> _userManager;
+        private readonly SignInManager<AppUser> _signInManager;
 
-        public UserService(IRepositoryManager repository, IMapper mapper, 
-            IPasswordHasher<AppUser> hasher, IOptions<JwtOptions> jwt,
-            IHttpContextAccessor contextAccessor)
+        public UserService(IRepositoryManager repository, IMapper mapper,
+            IOptions<JwtOptions> jwt,
+            IHttpContextAccessor contextAccessor,
+            IEmailService emailService, IHostEnvironment host,
+            IUploadService uploadService,
+            UserManager<AppUser> userManager,
+            SignInManager<AppUser> signInManager)
         {
             _repository = repository;
             _mapper = mapper;
-            _hasher = hasher;
+            _emailService = emailService;
             _jwtOptions = jwt.Value;
             _user = contextAccessor.HttpContext?.User;
+            _host = host;
+            _uploadService = uploadService;
+            _userManager = userManager;
+            _signInManager = signInManager;
         }
 
-        public async Task<UserInfoDto> RegisterAsync(RegisterUserCommand command)
+        public async Task<ApiResult<UserInfoDto>> GetLoggedInUser()
         {
-            var existingUser = await _repository.User.GetByEmailAsync(command.EmailAddress);
+            var loggedInUserEmail = _user?.FindFirstValue(ClaimTypes.Name);
+            if (string.IsNullOrWhiteSpace(loggedInUserEmail))
+            {
+                return new ApiResult<UserInfoDto>("Access denied. User not logged in.", 403);
+            }
+
+            var loggedInUser = await _userManager.FindByEmailAsync(loggedInUserEmail);
+            if(loggedInUser == null)
+            {
+                return new ApiResult<UserInfoDto>("User record not found", 404);
+            }
+
+            return new ApiResult<UserInfoDto>(_mapper.Map<UserInfoDto>(loggedInUser));
+        }
+
+        public async Task<ApiResult<string>> RegisterAsync(RegisterUserCommand command)
+        {
+            var validator = new RegisterUserCommandValidator().Validate(command);
+            if (!validator.IsValid)
+            {
+                return new ApiResult<string>(validator.Errors.FirstOrDefault()?.ErrorMessage ?? "Invalid input");
+            }
+
+            var existingUser = await _userManager.FindByEmailAsync(command.EmailAddress);
             if(existingUser != null)
             {
-                return null!;
+                return new ApiResult<string>("There is a user already existing with this email", 409);
             }
 
             var appUser = _mapper.Map<AppUser>(command);
-            appUser.PasswordHash = _hasher.HashPassword(appUser, command.Password);
-            await _repository.User.AddAsync(appUser);
-            return _mapper.Map<UserInfoDto>(appUser);
+            appUser.UserName = command.EmailAddress;
+            var createResult = await _userManager.CreateAsync(appUser, command.Password);
+            if (!createResult.Succeeded)
+            {
+                return new ApiResult<string>(createResult.Errors.FirstOrDefault()?.Description ?? "Registreation failed", 400);
+            }
+
+            var roleResult = await _userManager.AddToRoleAsync(appUser, Roles.User.ToString());
+            if (!roleResult.Succeeded)
+            {
+                await _userManager.DeleteAsync(appUser);
+                return new ApiResult<string>(roleResult.Errors.FirstOrDefault()?.Description ?? "Registreation failed", 400);
+            }
+
+            //Generate OTP
+            var otp = Extensions.GenerateOtp();
+            var (Hash, Salt) = Extensions.HashOtp(otp);
+            await _repository.User.InsertOtp(new OtpEntry
+            {
+                OtpHash = Hash,
+                OtpSalt = Salt,
+                UserId = appUser.Id,
+                Type = Domain.Enums.OtpType.Verification
+            }, false);
+
+            await _repository.SaveAsync();
+            var message = GetAccountVerificationMessage(appUser.FirstName, otp, 5);
+            await _emailService.SendAsync(appUser.Email!, message, "Verify Your Account");
+            return new ApiResult<string>("Registration successful. Please check your email for confirmation code");
         }
 
         public async Task<ApiResult<TokenDto>> LoginAsync(LoginCommand command)
         {
-            var user = await _repository.User.GetByEmailAsync(command.Email);
+            //TODO: validate the LoginCommand using the LoginCommandValidator and return the appropriate response if input not valid
+            // See line 79 above for tips
+            var user = await _userManager.FindByEmailAsync(command.Email);
             if(user == null)
             {
                 return new ApiResult<TokenDto>("No user found with the specified email address", 404);
             }
 
-            //TODO: Go to AppUser model class. Change the Status default value t Pending.
-            //TODO: if the Status of the user is not Active, return error message and status:
-            // Message: You can't login right now. Account is not active yet.
-            // Status: 403
+            if(user.Status != Statuses.Active || !user.EmailConfirmed)
+            {
+                return new ApiResult<TokenDto>("You can't login right now. Account is not active yet.", 403);
+            }
 
-            var loginResult = _hasher.VerifyHashedPassword(user, user.PasswordHash, command.Password);
-
-            if (loginResult == PasswordVerificationResult.Failed)
+            var loginResult = await _signInManager.CheckPasswordSignInAsync(user, command.Password, lockoutOnFailure: true);
+            if (!loginResult.Succeeded)
             {
                 return new ApiResult<TokenDto>("Incorrect password", 400);
             }
 
-            var jwtToken = GenerateAccessToken(user);
+            var roles = await _userManager.GetRolesAsync(user);
+            var jwtToken = GenerateAccessToken(user, [.. roles]);
             return new ApiResult<TokenDto>(new TokenDto
             {
                 AccessToken = jwtToken
             });
         }
 
-        public async Task<UserInfoDto?> GetById(Guid id)
+        public async Task<ApiResult<string>> VerifyAccountAsync(AccountVerificationCommand command)
         {
-            var user = await _repository.User.GetByIdAsync(id);
+            //TODO: validate the AccountVerificationCommand using the AccountVerificationCommandValidator and return the appropriate response if input not valid
+            // See line 79 above for tips
+
+            var user = await _userManager.FindByEmailAsync(command.Email);
+            if(user == null)
+            {
+                return new ApiResult<string>("User not found", 404);
+            }
+
+            var otp = await _repository.User
+                .GetOtpAsync(o => o.UserId == user.Id && o.Type == OtpType.Verification);
+            if(otp == null)
+            {
+                return new ApiResult<string>("No verification OTP found for user", 404);
+            }
+
+            var isValid = Extensions.IsAValidOtp(command.Otp, otp.OtpSalt, otp.OtpHash, otp.Expires);
+            if (!isValid)
+            {
+                return new ApiResult<string>("Invalid OTP", 400);
+            }
+
+            user.UpdatedOn = DateTime.UtcNow;
+            user.Status = Statuses.Active;
+            user.EmailConfirmed = true;
+            await _userManager.UpdateAsync(user);
+            await _repository.User.DeleteOtp(otp);
+            return new ApiResult<string>("Account verification successful. You can proceed to login");
+        }
+
+        public async Task<UserInfoDto?> GetById(string id)
+        {
+            var user = await _userManager.FindByIdAsync(id);
             if(user == null)
             {
                 return null;
@@ -87,9 +191,9 @@ namespace ProfessionalPortfolio.Application.Services
             return _mapper.Map<UserInfoDto>(user);
         }
 
-        public async Task<UserInfoDtoV2?> GetByIdV2Async(Guid id)
+        public async Task<UserInfoDtoV2?> GetByIdV2Async(string id)
         {
-            var user = await _repository.User.GetByIdAsync(id);
+            var user = await _userManager.FindByIdAsync(id);
             if (user == null)
             {
                 return null;
@@ -100,65 +204,162 @@ namespace ProfessionalPortfolio.Application.Services
 
         public List<UserInfoDto> GetAll(GetAllUsersQuery query)
         {
-            var users = _repository.User.GetAll();
+            var users = _userManager.Users;
             if (!string.IsNullOrEmpty(query.Search))
             {
                 users = users.Where(u => u.FirstName.Contains(query.Search, StringComparison.OrdinalIgnoreCase) || 
                 u.LastName.Contains(query.Search, StringComparison.OrdinalIgnoreCase));
             }
-            if (query.Role.HasValue)
-            {
-                users = users.Where(u => u.Role.Equals(query.Role.Value.ToString(), StringComparison.OrdinalIgnoreCase));
-            }
 
             return _mapper.Map<List<UserInfoDto>>(users);
         }
 
-        public async Task<UserInfoDto?> Update(UserUpdateCommand command)
+        public async Task<ApiResult<PagedResult<UserInfoDto>>> GetPagedUser(GetAllUsersQuery query)
         {
-            //TODO: Got to UserUpdateCommand.cs . Add validation for First and Last name properties.
-            //Both required and string length of 100.
+            var users = _userManager.Users;
+            var total = await users.CountAsync();
+            var items = await users
+                .Filter(query.Search)
+                .Sort(query.SortBy, query.IsAscending)
+                .Skip((query.Page - 1) * query.PageSize)
+                .Take(query.PageSize)
+                .Select(u => new UserInfoDto
+                {
+                    Id = u.Id,
+                    Name = $"{u.FirstName} {u.LastName}",
+                    Email = u.Email!,
+                    ProfilePicture = u.ProfilePicture,
+                    ResumeUrl = u.ResumeUrl,
+                    Status = u.Status.ToString(),
+                    RegistrationDate = u.CreatedOn
+                }).ToListAsync();
 
-            //TODO: Get the logged in user id below. See the AddEducation method in EducationService.cs
-            var userId = Guid.Empty;
-            //TODO: Return null if userId is Guid.Empty
-            var existing = await _repository.User.GetByIdAsync(userId);
+            return new ApiResult<PagedResult<UserInfoDto>>(data: new PagedResult<UserInfoDto>
+            {
+                Total = total,
+                Page = query.Page,
+                PageSize = query.PageSize,
+                Items = items
+            });
+        }
+
+        public async Task<ApiResult<string>> Update(UserUpdateCommand command)
+        {
+            //TODO: validate the UserUpdateCommand using the UserUpdateCommandValidator and return the appropriate response if input not valid
+            // See line 79 above for tips
+
+            var userId = _user.GetLoggedInUserId();
+            if (!string.IsNullOrWhiteSpace(userId))
+            {
+                return new ApiResult<string>("You are not allowed to access this resources", 403);
+            }
+
+            var existing = await _userManager.FindByIdAsync(userId);
             if(existing == null)
             {
-                return null;
+                return new ApiResult<string>("User not found", 404);
             }
-
-            existing.FirstName = command.FirstName;
-            existing.LastName = command.LastName;
-            existing.OtherName = command.OtherName;
 
             _mapper.Map(command, existing);
-            await _repository.User.UpdateAsync(existing);
+            await _userManager.UpdateAsync(existing);
 
-            return _mapper.Map<UserInfoDto>(existing);
+            return new ApiResult<string>("Updated successfully");
         }
 
-        public async Task Delete(Guid id)
+        public async Task<ApiResult<string>> Delete(string id)
         {
-            var user = await _repository.User.GetByIdAsync(id);
+            var user = await _userManager.FindByIdAsync(id);
             if (user == null)
             {
-                throw new Exception("User is null");
+                return new ApiResult<string>("User not found", 404);
             }
 
-            await _repository.User.DeleteAsync(user);
+            await _userManager.DeleteAsync(user);
+            return new ApiResult<string>("Successfully deleted");
         }
 
-        private string GenerateAccessToken(AppUser user)
+        public async Task<ApiResult<string>> UploadUserCv(IFormFile cv)
+        {
+            var validationResult = ValidateFile(cv, FileType.Docs);
+            if (!validationResult.Success)
+            {
+                return validationResult;
+            }
+
+            var userId = _user.GetLoggedInUserId();
+            if(!string.IsNullOrWhiteSpace(userId))
+            {
+                return new ApiResult<string>("You're not allowed to access this resources", 403);
+            }
+
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+            {
+                return new ApiResult<string>("User record not found", 404);
+            }
+
+            using var stream = cv.OpenReadStream();
+            stream.Position = 0;
+            var uploadResult = await _uploadService.UploadRawAsync(user.Id.Replace("-", ""), cv.FileName, stream);
+            if (!uploadResult.Success)
+            {
+                return new ApiResult<string>("CV upload failed. Please try again later", 500);
+            }
+
+            user.ResumePublicId = uploadResult.PublicId;
+            user.ResumeUrl = uploadResult.Url;
+            user.UpdatedOn = DateTime.UtcNow;
+            await _userManager.UpdateAsync(user);
+
+            return new ApiResult<string>("CV upload successful.");
+        }
+
+        public async Task<ApiResult<string>> UploadProfileImage(IFormFile file)
+        {
+            var validationResult = ValidateFile(file, FileType.Image);
+            if (!validationResult.Success)
+            {
+                return validationResult;
+            }
+
+            var email = _user?.FindFirstValue(ClaimTypes.Name);
+            if (string.IsNullOrEmpty(email))
+            {
+                return new ApiResult<string>("Access denied.", 403);
+            }
+
+            var user = await _userManager.FindByEmailAsync(email);
+            if (user == null)
+            {
+                return new ApiResult<string>("User not found", 404);
+            }
+
+            using var stream = file.OpenReadStream();
+            stream.Position = 0;
+            var uploadResult = await _uploadService.UploadImageAsync(user.Id.Replace("-", ""), file.FileName, stream);
+            if (!uploadResult.Success)
+            {
+                return new ApiResult<string>("Profile image upload failed", 400);
+            }
+
+            user.ProfilePicture = uploadResult.Url;
+            user.ProfilePicturePublicId = uploadResult.PublicId;
+            await _userManager.UpdateAsync(user);
+
+            return new ApiResult<string>("Profile picture successfully uploaded");
+        }
+
+        private string GenerateAccessToken(AppUser user, List<string> roles)
         {
             //jwt: header, payload, signature
             var claims = new List<Claim>
             {
-                new(ClaimTypes.Name, user.Email),
-                new(ClaimTypes.Role, user.Role),
-                new(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                new(JwtRegisteredClaimNames.Sub, user.Id.ToString())
+                new(ClaimTypes.Name, user.Email!),
+                new(ClaimTypes.NameIdentifier, user.Id),
+                new(JwtRegisteredClaimNames.Sub, user.Id)
             };
+
+            claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtOptions.Secret));
             var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
@@ -172,6 +373,44 @@ namespace ProfessionalPortfolio.Application.Services
             );
 
             return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+
+        private string GetAccountVerificationMessage(string firstName, string otp, int validty)
+        {
+            var path = Path.Combine(_host.ContentRootPath, "wwwroot", "templates", "account-verification.html");
+            if (File.Exists(path))
+            {
+                var template = File.ReadAllText(path);
+                return template.Replace("{{FirstName}}", firstName)
+                    .Replace("{{OTP}}", otp)
+                    .Replace("{{validity}}", validty.ToString());
+            }
+
+            throw new Exception($"Path not found: {path}");
+        }
+
+        private ApiResult<string> ValidateFile(IFormFile file, FileType type)
+        {
+            if (file.Length <= 0)
+            {
+                return new ApiResult<string>("Invalid file uploaded", 400);
+            }
+
+            if (file.Length > MaxResourceSize)
+            {
+                return new ApiResult<string>("Maximum file size is 2mb.", 400);
+            }
+
+            if (type == FileType.Image && !allowedFileType.Any(f => file.FileName.EndsWith(f)))
+            {
+                return new ApiResult<string>("Invalid file type.", 400);
+            }
+            if(type == FileType.Docs && !allowedDocType.Any(f => file.FileName.EndsWith(f)))
+            {
+                return new ApiResult<string>("Invalid doc type", 400);
+            }
+
+            return new ApiResult<string>("Valid");
         }
     }
 }

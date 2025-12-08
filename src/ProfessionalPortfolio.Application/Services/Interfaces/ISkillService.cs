@@ -10,5 +10,6 @@ namespace ProfessionalPortfolio.Application.Services.Interfaces
         Task<ApiResult<string>> AddSkillsAsync(AddUserSkillCommand command);
         ApiResult<List<SkillInfoDto>> GetAllSkills();
         Task<ApiResult<List<string>>> GetUserSkillsAsync();
+        Task<ApiResult<string>> RemoveUserSkill(Guid skillId);
     }
 }

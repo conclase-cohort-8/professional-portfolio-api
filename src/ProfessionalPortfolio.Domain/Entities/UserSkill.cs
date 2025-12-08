@@ -2,7 +2,7 @@
 {
     public class UserSkill
     {
-        public Guid UserId { get; set; }
+        public string UserId { get; set; } = string.Empty;
         public AppUser? User { get; set; }
 
         public Guid SkillId { get; set; }

@@ -8,7 +8,7 @@ namespace ProfessionalPortfolio.Application.Common.Interfaces
         Task Deprecate(Experience experience);
         IQueryable<Experience> GetAll();
         Task<Experience?> GetByIdAsync(Guid id);
-        Task<List<Experience>> GetByUserIdAsync(Guid userId);
+        Task<List<Experience>> GetByUserIdAsync(string userId);
         Task UpdateAsync(Experience experience);
     }
 }

@@ -6,8 +6,10 @@ namespace ProfessionalPortfolio.Application.Services.Interfaces
 {
     public interface IExperienceService
     {
-        Task<ApiResult<string>> AddExperience(AddExperienceCommand command);
+        Task<ApiResult<string>> AddAsync(AddExperienceCommand command);
+        Task<ApiResult<string>> DeleteAsync(Guid id);
         Task<ApiResult<List<ExperienceInfoDto>>> GetAllAsync();
-        Task<ApiResult<string>> UpdateExperience(Guid id, UpdateExperienceCommand command);
+        Task<ApiResult<ExperienceInfoDto>> GetByIdAsync(Guid id);
+        Task<ApiResult<string>> UpdateAsync(Guid id, UpdateExperienceCommand command);
     }
 }

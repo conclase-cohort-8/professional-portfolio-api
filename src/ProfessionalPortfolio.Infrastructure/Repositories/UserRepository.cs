@@ -2,6 +2,7 @@
 using ProfessionalPortfolio.Application.Common.Interfaces;
 using ProfessionalPortfolio.Domain.Entities;
 using ProfessionalPortfolio.Infrastructure.Persistence;
+using System.Linq.Expressions;
 
 namespace ProfessionalPortfolio.Infrastructure.Repositories
 {
@@ -14,37 +15,26 @@ namespace ProfessionalPortfolio.Infrastructure.Repositories
             _context = context;
         }
 
-        public async Task AddAsync(AppUser user)
+        public async Task InsertOtp(OtpEntry otp, bool save = true)
         {
-            await _context.Users.AddAsync(user);
-            await _context.SaveChangesAsync();
+            await _context.Otps.AddAsync(otp);
+            if(save)
+            {
+                await _context.SaveChangesAsync();
+            }
         }
 
-        public async Task DeleteAsync(AppUser user)
+        public async Task<OtpEntry?> GetOtpAsync(Expression<Func<OtpEntry, bool>> predicate)
         {
-            _context.Users.Remove(user);
-            await _context.SaveChangesAsync();
+            return await _context.Otps
+                .Where(predicate)
+                .OrderByDescending(o => o.Expires)
+                .FirstOrDefaultAsync();
         }
 
-        public IQueryable<AppUser> GetAll()
+        public async Task DeleteOtp(OtpEntry otp)
         {
-            return _context.Users;
-        }
-
-        public async Task<AppUser?> GetByEmailAsync(string email)
-        {
-            return await _context.Users
-                .FirstOrDefaultAsync(u => u.Email == email);
-        }
-
-        public async Task<AppUser?> GetByIdAsync(Guid id)
-        {
-            return await _context.Users.FindAsync(id);
-        }
-
-        public async Task UpdateAsync(AppUser user)
-        {
-            _context.Users.Update(user);
+            _context.Otps.Remove(otp);
             await _context.SaveChangesAsync();
         }
     }

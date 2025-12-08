@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using ProfessionalPortfolio.Application.Commands;
 using ProfessionalPortfolio.Application.Services.Interfaces;
 
@@ -17,7 +18,7 @@ namespace ProfessionalPortfolio.API.Controllers.V1
         }
 
         [HttpPost]
-        //TODO: Make this a protected route by adding the Authorize attirbute here but only user with Admin role should be able to access it
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> PostMany(List<string> skills)
         {
             var response = await _skillService.AddSkills(skills);
@@ -30,14 +31,14 @@ namespace ProfessionalPortfolio.API.Controllers.V1
         }
 
         [HttpGet]
-        //TODO: Make this a protected route by adding the Authorize attirbute here but only user with Admin role should be able to access it
+        [Authorize]
         public IActionResult GetAll()
         {
             return Ok(_skillService.GetAllSkills());
         }
 
         [HttpPost("user")]
-        //TODO: Make this a protected route by adding the Authorize attirbute here
+        [Authorize]
         public async Task<IActionResult> PostUserSkills([FromBody] AddUserSkillCommand command)
         {
             var result = await _skillService.AddSkillsAsync(command);
@@ -45,8 +46,8 @@ namespace ProfessionalPortfolio.API.Controllers.V1
         }
 
         [HttpGet("user")]
-        //TODO: Make this a protected route by adding the Authorize attirbute here
-        public async Task<IActionResult> GetUserSkills([FromHeader(Name = "X-UserId")] Guid userId)
+        [Authorize]
+        public async Task<IActionResult> GetUserSkills()
         {
             var response = await _skillService.GetUserSkillsAsync();
             return StatusCode(response.Status, response);

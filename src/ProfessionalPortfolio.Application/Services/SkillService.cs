@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using ProfessionalPortfolio.Application.Commands;
 using ProfessionalPortfolio.Application.Common;
 using ProfessionalPortfolio.Application.Common.Interfaces;
@@ -14,13 +15,17 @@ namespace ProfessionalPortfolio.Application.Services
     {
         private readonly IRepositoryManager _repository;
         private readonly IMapper _mapper;
+        private readonly UserManager<AppUser> _userManager;
         private readonly ClaimsPrincipal? _user;
 
         public SkillService(IRepositoryManager repository,
-                            IMapper mapper, IHttpContextAccessor accessor)
+                            IMapper mapper, 
+                            IHttpContextAccessor accessor,
+                            UserManager<AppUser> userManager)
         {
             _repository = repository;
             _mapper = mapper;
+            _userManager = userManager;
             _user = accessor.HttpContext?.User;
         }
 
@@ -63,9 +68,12 @@ namespace ProfessionalPortfolio.Application.Services
 
         public async Task<ApiResult<List<string>>> GetUserSkillsAsync()
         {
-            //TODO: Get the logged in user id below. See the AddEducation method in EducationService.cs
-            var userId = Guid.Empty;
-            //TODO: Return status 403, and message "You are not allowed to access this resources" if userId is Guid.Empty
+            var userId = _user.GetLoggedInUserId();
+            if (!string.IsNullOrWhiteSpace(userId))
+            {
+                return new ApiResult<List<string>>("You are not allowed to access this resources", 403);
+            }
+
             var userSkills = await _repository.Skill
                 .GetUserSkills(userId);
 
@@ -74,21 +82,19 @@ namespace ProfessionalPortfolio.Application.Services
 
         public async Task<ApiResult<string>> AddSkillsAsync(AddUserSkillCommand command)
         {
-            //TODO: Get the logged in user id below. See the AddEducation method in EducationService.cs
-            var userId = Guid.Empty;
-            //TODO: Return status 403, and message "You are not allowed to access this resources" if userId is Guid.Empty
-            if (userId == Guid.Empty || command == null)
+            var userId = _user.GetLoggedInUserId();
+            if (!string.IsNullOrWhiteSpace(userId))
             {
-                return new ApiResult<string>("Invalid input", 400);
+                return new ApiResult<string>("You are not allowed to access this resources", 403);
             }
 
-            if(userId != command.UserId)
+            if (userId != command.UserId)
             {
                 return new ApiResult<string>("You cannot add skill for a different user.", 403);
             }
 
-            var user = await _repository.User.GetByIdAsync(userId);
-            if(user == null)
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
             {
                 return new ApiResult<string>("User not found", 404);
             }
@@ -107,6 +113,25 @@ namespace ProfessionalPortfolio.Application.Services
 
             await _repository.Skill.AddUserSkill(userSkill);
             return new ApiResult<string>($"{ skill.Name } successfully added to user skills.", 200, true);
+        }
+
+        public async Task<ApiResult<string>> RemoveUserSkill(Guid skillId)
+        {
+            var userId = _user.GetLoggedInUserId();
+            if (!string.IsNullOrWhiteSpace(userId))
+            {
+                return new ApiResult<string>("You are not allowed to access this resources", 403);
+            }
+
+            var userSkill = await _repository.Skill
+                .GetUserSkill(userId, skillId);
+            if (userSkill == null)
+            {
+                return new ApiResult<string>("User skill record not found", 404);
+            }
+
+            await _repository.Skill.RemoveAsync(userSkill);
+            return new ApiResult<string>("User skill record successfully deleted");
         }
     }
 }

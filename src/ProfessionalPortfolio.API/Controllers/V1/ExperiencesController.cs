@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using ProfessionalPortfolio.Application.Commands;
 using ProfessionalPortfolio.Application.Services.Interfaces;
 
 namespace ProfessionalPortfolio.API.Controllers.V1
@@ -24,19 +25,31 @@ namespace ProfessionalPortfolio.API.Controllers.V1
             return FromResponse(response);
         }
 
-        // TODO POST: Implement endpoint to add a new Experience record.
-        // Paramter: AddExperienceCommand command, from body
-        // Method: Post
-        // Path: /
-        // Returns: see above
-        // Note: Call AddExperience() from the service and await it
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetById([FromRoute] Guid id)
+        {
+            return FromResponse(await  _service.GetByIdAsync(id));
+        }
 
-        // TODO PATCH: Implement endpoint to update an existing Experience record.
-        // Parameter: Guid id, from route
-        // Paramter: UpdateExperienceCommand command, from body
-        // Method: Patch
-        // Path: /{id}
-        // Returns: see above
-        // Note: Call UpdateExperience(id, command) from the service and await it
+        [HttpPost]
+        [Authorize]
+        public async Task<IActionResult> PostAsync([FromBody] AddExperienceCommand command)
+        {
+            return FromResponse(await _service.AddAsync(command));
+        }
+
+        [HttpPatch("{id}")]
+        [Authorize]
+        public async Task<IActionResult> PostAsync([FromRoute] Guid id, [FromBody] UpdateExperienceCommand command)
+        {
+            return FromResponse(await _service.UpdateAsync(id, command));
+        }
+
+        [HttpDelete("{id}")]
+        [Authorize]
+        public async Task<IActionResult> Delete([FromRoute] Guid id)
+        {
+            return FromResponse(await _service.DeleteAsync(id));
+        }
     }
 }
