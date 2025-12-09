@@ -45,7 +45,7 @@ namespace ProfessionalPortfolio.Application.Services
 
             var userId = _user.GetLoggedInUserId();
            
-            if (userId == Guid.Empty)
+            if (string.IsNullOrWhiteSpace(userId))
             {
                 return new ApiResult<string>("You're not allowed to perform this action", 403);
             }
@@ -61,13 +61,12 @@ namespace ProfessionalPortfolio.Application.Services
             // See line 79 (RegisterAsync() method) in the UserService.cs above for tips
 
             var userId = _user.GetLoggedInUserId();
-            
-            if(userId == Guid.Empty)
+            if(string.IsNullOrWhiteSpace(userId))
             {
                 return new ApiResult<string>("You're not allowed to perform this action", 403);
             }
+
             var project = await _repository.Project.GetByIdAsync(id);
-            
             if(project == null)
 
             {
@@ -84,8 +83,6 @@ namespace ProfessionalPortfolio.Application.Services
 
             await _repository.Project.UpdateAsync(project);
             return new ApiResult<string>("Project record successfully updated");
-        }
-
-       
+        }   
     }
 }
