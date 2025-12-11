@@ -124,6 +124,11 @@ namespace ProfessionalPortfolio.Application.Services
         {
             //TODO: validate the LoginCommand using the LoginCommandValidator and return the appropriate response if input not valid
             // See line 79 above for tips
+            var validator = new LoginCommandValidation().Validate(command);
+            if (!validator.IsValid)
+            {
+                return new ApiResult<TokenDto>(validator.Errors.FirstOrDefault()?.ErrorMessage ?? "Invalid input" , 400);
+            }
             var user = await _userManager.FindByEmailAsync(command.Email);
             if(user == null)
             {
@@ -153,6 +158,11 @@ namespace ProfessionalPortfolio.Application.Services
         {
             //TODO: validate the AccountVerificationCommand using the AccountVerificationCommandValidator and return the appropriate response if input not valid
             // See line 79 above for tips
+            var validator = new AccountVerificationCommandValidator().Validate(command);
+            if (!validator.IsValid)
+            {
+                return new ApiResult<string>(validator.Errors.FirstOrDefault()?.ErrorMessage ?? "Invalid input", 400);
+            }
 
             var user = await _userManager.FindByEmailAsync(command.Email);
             if(user == null)
@@ -247,6 +257,7 @@ namespace ProfessionalPortfolio.Application.Services
         {
             //TODO: validate the UserUpdateCommand using the UserUpdateCommandValidator and return the appropriate response if input not valid
             // See line 79 above for tips
+           
 
             var userId = _user.GetLoggedInUserId();
             if (!string.IsNullOrWhiteSpace(userId))
