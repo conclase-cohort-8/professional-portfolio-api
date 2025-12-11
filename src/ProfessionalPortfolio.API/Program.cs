@@ -20,6 +20,7 @@ using Serilog.Events;
 using Serilog.Formatting.Json;
 using System.Reflection;
 using System.Text;
+using Refit;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -41,6 +42,22 @@ Log.Logger = new LoggerConfiguration()
 
 builder.Host.UseSerilog();
 // Add your services to the container.
+
+//Configure Http Client For Weather API
+var weatherApibaseUrl = builder.Configuration["WeatherApi:BaseUrl"] ??
+    throw new ArgumentNullException("WeatherApi:BaseUrl");
+
+builder.Services.AddHttpClient("WeatherForecastService", opt =>
+{
+    opt.BaseAddress = new Uri(weatherApibaseUrl);
+    opt.Timeout = TimeSpan.FromSeconds(90);
+});
+
+// Configre Refit
+builder.Services.AddRefitClient<IWeatherForecast>()
+    .ConfigureHttpClient(c => c.BaseAddress = new Uri(weatherApibaseUrl));
+
+builder.Services.AddSingleton<WeatherforecastService>();
 
 var connectionString = builder.Configuration.GetConnectionString("Default");
 builder.Services.AddDbContext<SqlServerDbContext>(options => options.UseSqlServer(connectionString));

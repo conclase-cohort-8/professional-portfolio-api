@@ -6,6 +6,7 @@ using ProfessionalPortfolio.Application.Common;
 using ProfessionalPortfolio.Application.Common.Interfaces;
 using ProfessionalPortfolio.Application.DTOs;
 using ProfessionalPortfolio.Application.Services.Interfaces;
+using ProfessionalPortfolio.Application.Validations;
 using ProfessionalPortfolio.Domain.Entities;
 using System.Security.Claims;
 

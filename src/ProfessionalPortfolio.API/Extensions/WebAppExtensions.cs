@@ -16,7 +16,7 @@ namespace ProfessionalPortfolio.API.Extensions
         public static async Task SeedAsync(this WebApplication app)
         {
             using var scope = app.Services.CreateScope();
-            await SeedAdminUser(scope);
+            //await SeedAdminUser(scope);
         }
 
         private static async Task SeedAdminUser(IServiceScope scope)
