@@ -6,11 +6,9 @@ namespace ProfessionalPortfolio.Application.Common
 {
     public static class Extensions
     {
-        public static Guid GetLoggedInUserId(this ClaimsPrincipal? claimsPrincipal)
+        public static string GetLoggedInUserId(this ClaimsPrincipal? claimsPrincipal)
         {
-            if(claimsPrincipal != null && Guid.TryParse(claimsPrincipal.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
-                return userId;
-            return Guid.Empty;
+            return claimsPrincipal?.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
         }
 
         public static string GenerateOtp(int length = 5)

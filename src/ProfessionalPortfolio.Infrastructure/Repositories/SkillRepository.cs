@@ -32,12 +32,19 @@ namespace ProfessionalPortfolio.Infrastructure.Repositories
             await _context.SaveChangesAsync();
         }
 
-        public async Task<List<string>> GetUserSkills(Guid userId)
+        public async Task<List<string>> GetUserSkills(string userId)
         {
             return await _context.UserSkills
                 .Where(us => us.UserId == userId)
                 .Select(us => us.Skill!.Name)
                 .ToListAsync();
+        }
+
+        public async Task<UserSkill?> GetUserSkill(string userId, Guid skillId)
+        {
+            return await _context.UserSkills
+                .Where(us => us.UserId == userId && us.SkillId == skillId)
+                .FirstOrDefaultAsync();
         }
 
         public async Task RemoveAsync(UserSkill userSkill)

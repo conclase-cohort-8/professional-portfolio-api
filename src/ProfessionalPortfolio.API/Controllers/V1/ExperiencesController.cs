@@ -25,12 +25,11 @@ namespace ProfessionalPortfolio.API.Controllers.V1
             return FromResponse(response);
         }
 
-        // TODO POST: Implement endpoint to add a new Experience record.
-        // Paramter: AddExperienceCommand command, from body
-        // Method: Post
-        // Path: /
-        // Returns: see above
-        // Note: Call AddExperience() from the service and await it
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetById([FromRoute] Guid id)
+        {
+            return FromResponse(await  _service.GetByIdAsync(id));
+        }
 
         [HttpPost]
         [Authorize]
@@ -56,6 +55,23 @@ namespace ProfessionalPortfolio.API.Controllers.V1
         {
             var response = await _service.UpdateExperience(id, command);
             return FromResponse(response);
+        public async Task<IActionResult> PostAsync([FromBody] AddExperienceCommand command)
+        {
+            return FromResponse(await _service.AddAsync(command));
+        }
+
+        [HttpPatch("{id}")]
+        [Authorize]
+        public async Task<IActionResult> PostAsync([FromRoute] Guid id, [FromBody] UpdateExperienceCommand command)
+        {
+            return FromResponse(await _service.UpdateAsync(id, command));
+        }
+
+        [HttpDelete("{id}")]
+        [Authorize]
+        public async Task<IActionResult> Delete([FromRoute] Guid id)
+        {
+            return FromResponse(await _service.DeleteAsync(id));
         }
     }
 }

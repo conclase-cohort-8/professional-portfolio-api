@@ -1,22 +1,24 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using ProfessionalPortfolio.Application.Services.Interfaces;
+using ProfessionalPortfolio.Domain.Entities;
 
 namespace ProfessionalPortfolio.API.Filters
 {
     public class ApiKeyFilter : IAsyncActionFilter
     {
-        private readonly IUserService _userService;
+        private readonly UserManager<AppUser> _userManager;
 
-        public ApiKeyFilter(IUserService userService)
+        public ApiKeyFilter(UserManager<AppUser> userManager)
         {
-            _userService = userService;
+            _userManager = userManager;
         }
 
         public async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
         {
             var headers = context.HttpContext.Request.Headers;
-            if (!headers.TryGetValue("X-ApiKey", out var value) || !Guid.TryParse(value, out var userId))
+            if (!headers.TryGetValue("X-ApiKey", out var value) && string.IsNullOrWhiteSpace(value.ToString()))
             {
                 context.Result = new ContentResult
                 {
@@ -28,7 +30,7 @@ namespace ProfessionalPortfolio.API.Filters
             }
             else
             {
-                var user = await _userService.GetById(userId);
+                var user = await _userManager.FindByIdAsync(value.ToString());
                 if (user == null)
                 {
                     context.Result = new ContentResult

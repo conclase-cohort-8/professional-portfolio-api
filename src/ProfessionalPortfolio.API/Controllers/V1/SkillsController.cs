@@ -47,7 +47,7 @@ namespace ProfessionalPortfolio.API.Controllers.V1
 
         [HttpGet("user")]
         [Authorize]
-        public async Task<IActionResult> GetUserSkills([FromHeader(Name = "X-UserId")] Guid userId)
+        public async Task<IActionResult> GetUserSkills()
         {
             var response = await _skillService.GetUserSkillsAsync();
             return StatusCode(response.Status, response);

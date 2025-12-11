@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using ProfessionalPortfolio.Application.Commands;
 using ProfessionalPortfolio.Application.Common;
 using ProfessionalPortfolio.Application.Common.Interfaces;
@@ -14,13 +15,17 @@ namespace ProfessionalPortfolio.Application.Services
     {
         private readonly IRepositoryManager _repository;
         private readonly IMapper _mapper;
+        private readonly UserManager<AppUser> _userManager;
         private readonly ClaimsPrincipal? _user;
 
         public SkillService(IRepositoryManager repository,
-                            IMapper mapper, IHttpContextAccessor accessor)
+                            IMapper mapper, 
+                            IHttpContextAccessor accessor,
+                            UserManager<AppUser> userManager)
         {
             _repository = repository;
             _mapper = mapper;
+            _userManager = userManager;
             _user = accessor.HttpContext?.User;
         }
 
@@ -64,7 +69,7 @@ namespace ProfessionalPortfolio.Application.Services
         public async Task<ApiResult<List<string>>> GetUserSkillsAsync()
         {
             var userId = _user.GetLoggedInUserId();
-            if(userId == Guid.Empty)
+            if (!string.IsNullOrWhiteSpace(userId))
             {
                 return new ApiResult<List<string>>("You are not allowed to access this resources", 403);
             }
@@ -78,7 +83,7 @@ namespace ProfessionalPortfolio.Application.Services
         public async Task<ApiResult<string>> AddSkillsAsync(AddUserSkillCommand command)
         {
             var userId = _user.GetLoggedInUserId();
-            if (userId == Guid.Empty)
+            if (!string.IsNullOrWhiteSpace(userId))
             {
                 return new ApiResult<string>("You are not allowed to access this resources", 403);
             }
@@ -88,8 +93,8 @@ namespace ProfessionalPortfolio.Application.Services
                 return new ApiResult<string>("You cannot add skill for a different user.", 403);
             }
 
-            var user = await _repository.User.GetByIdAsync(userId);
-            if(user == null)
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
             {
                 return new ApiResult<string>("User not found", 404);
             }
@@ -108,6 +113,25 @@ namespace ProfessionalPortfolio.Application.Services
 
             await _repository.Skill.AddUserSkill(userSkill);
             return new ApiResult<string>($"{ skill.Name } successfully added to user skills.", 200, true);
+        }
+
+        public async Task<ApiResult<string>> RemoveUserSkill(Guid skillId)
+        {
+            var userId = _user.GetLoggedInUserId();
+            if (!string.IsNullOrWhiteSpace(userId))
+            {
+                return new ApiResult<string>("You are not allowed to access this resources", 403);
+            }
+
+            var userSkill = await _repository.Skill
+                .GetUserSkill(userId, skillId);
+            if (userSkill == null)
+            {
+                return new ApiResult<string>("User skill record not found", 404);
+            }
+
+            await _repository.Skill.RemoveAsync(userSkill);
+            return new ApiResult<string>("User skill record successfully deleted");
         }
     }
 }

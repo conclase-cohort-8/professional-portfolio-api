@@ -9,7 +9,7 @@ namespace ProfessionalPortfolio.Domain.Entities
         [Required, StringLength(2000)]
         public string Description { get; set; } = string.Empty;
 
-        public Guid UserId { get; set; }
+        public string UserId { get; set; } = string.Empty;
         public AppUser? User { get; set; }
     }
 }

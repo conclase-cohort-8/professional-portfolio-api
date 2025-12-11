@@ -25,11 +25,23 @@ namespace ProfessionalPortfolio.API.Controllers.V1
             return FromResponse(await _userService.GetLoggedInUser());
         }
 
-        [HttpPost("upload-image")]
+        [HttpPost("upload-file")]
         [Authorize]
         public async Task<IActionResult> UploadProfilePicture(IFormFile image)
         {
             return FromResponse(await _userService.UploadProfileImage(image));
+        }
+
+        /// <summary>
+        /// Uploads User CV
+        /// </summary>
+        /// <param name="file">Uploaded file</param>
+        /// <returns></returns>
+        [HttpPost("upload-cv")]
+        [Authorize]
+        public async Task<IActionResult> UploadUserCv(IFormFile file)
+        {
+            return FromResponse(await _userService.UploadUserCv(file));
         }
 
         [HttpGet]
@@ -40,7 +52,7 @@ namespace ProfessionalPortfolio.API.Controllers.V1
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetById([FromRoute] Guid id)
+        public async Task<IActionResult> GetById([FromRoute] string id)
         {
             var response = await _userService.GetById(id);
             if(response == null)
@@ -65,7 +77,7 @@ namespace ProfessionalPortfolio.API.Controllers.V1
 
         [HttpDelete("{id}")]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> Delete(Guid id)
+        public async Task<IActionResult> Delete(string id)
         {
             await _userService.Delete(id);
             return NoContent();
